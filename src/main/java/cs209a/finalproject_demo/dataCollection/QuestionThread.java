@@ -1,60 +1,47 @@
 package cs209a.finalproject_demo.dataCollection;
 
+import com.vladmihalcea.hibernate.type.json.JsonBinaryType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
+import org.hibernate.annotations.Type;
 
 import java.time.LocalDateTime;
 
 @Entity
-@Table(name = "question_entry")
+@Table(name = "question_thread")
 public class QuestionThread {
+
     @Id
+    @Column(name = "question_id")
     private Long questionId;
 
+    @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
-    private String question;      // 原始问题 JSON
+    private String question;
 
+    @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
-    private String answers;       // 原始回答列表 JSON
+    private String answers;
 
+    @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
-    private String comments;      // 原始评论列表 JSON
+    private String comments;
 
+    @Type(JsonBinaryType.class)
     @Column(columnDefinition = "jsonb")
-    private String tags;          // 原始 tags JSON
+    private String tags;
 
-    public Long getQuestionId() {
-        return questionId;
+    @Column(name = "fetched_at", nullable = false)
+    private LocalDateTime fetchedAt;
+
+    public LocalDateTime getFetchedAt() {
+        return fetchedAt;
     }
 
-    public void setQuestionId(Long questionId) {
-        this.questionId = questionId;
-    }
-
-    public String getQuestion() {
-        return question;
-    }
-
-    public void setQuestion(String question) {
-        this.question = question;
-    }
-
-    public String getAnswers() {
-        return answers;
-    }
-
-    public void setAnswers(String answers) {
-        this.answers = answers;
-    }
-
-    public String getComments() {
-        return comments;
-    }
-
-    public void setComments(String comments) {
-        this.comments = comments;
+    public void setFetchedAt(LocalDateTime fetchedAt) {
+        this.fetchedAt = fetchedAt;
     }
 
     public String getTags() {
@@ -65,13 +52,35 @@ public class QuestionThread {
         this.tags = tags;
     }
 
-    public LocalDateTime getFetchedAt() {
-        return fetchedAt;
+    public String getComments() {
+        return comments;
     }
 
-    public void setFetchedAt(LocalDateTime fetchedAt) {
-        this.fetchedAt = fetchedAt;
+    public void setComments(String comments) {
+        this.comments = comments;
     }
 
-    private LocalDateTime fetchedAt;
+    public String getAnswers() {
+        return answers;
+    }
+
+    public void setAnswers(String answers) {
+        this.answers = answers;
+    }
+
+    public String getQuestion() {
+        return question;
+    }
+
+    public void setQuestion(String question) {
+        this.question = question;
+    }
+
+    public Long getQuestionId() {
+        return questionId;
+    }
+
+    public void setQuestionId(Long questionId) {
+        this.questionId = questionId;
+    }
 }
