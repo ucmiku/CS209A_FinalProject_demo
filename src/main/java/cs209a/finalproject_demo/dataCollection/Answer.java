@@ -20,6 +20,17 @@ public class Answer {
     private Integer score;
     private Boolean isAccepted;
 
+    @Column(name = "creation_date", nullable = false)
+    private LocalDateTime creationDate;
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
+
     public Long getAnswerId() {
         return answerId;
     }

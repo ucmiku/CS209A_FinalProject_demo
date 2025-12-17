@@ -14,7 +14,7 @@ public class DataCollectorController {
     private final DataCollectorService dataCollectorService;
     private final QuestionTitleCollectorService titleService;
 
-    public DataCollectorController(DataCollectorService dataCollectorService, QuestionTitleCollectorService titleCollectorService, QuestionTitleCollectorService titleService) {
+    public DataCollectorController(DataCollectorService dataCollectorService, QuestionTitleCollectorService titleService) {
         this.dataCollectorService = dataCollectorService;
         this.titleService = titleService;
     }

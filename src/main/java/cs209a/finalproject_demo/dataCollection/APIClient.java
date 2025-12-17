@@ -41,7 +41,7 @@ public class APIClient {
                 .uri(uriBuilder -> uriBuilder
                         .path("/questions/{ids}")
                         .queryParam("site", "stackoverflow")
-                        .queryParam("filter", "!9_bDDxJY5")
+                        .queryParam("filter", "withbody")
                         .build(idPath)
                 )
                 .retrieve()

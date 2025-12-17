@@ -2,6 +2,8 @@ package cs209a.finalproject_demo.dataCollection;
 
 import jakarta.persistence.*;
 
+import java.time.LocalDateTime;
+
 @Entity
 @Table(name = "question")
 public class Question {
@@ -18,6 +20,16 @@ public class Question {
     @Lob
     @Column(columnDefinition = "TEXT")
     private String body;
+    @Column(name = "creation_date", nullable = false)
+    private LocalDateTime creationDate;
+
+    public LocalDateTime getCreationDate() {
+        return creationDate;
+    }
+
+    public void setCreationDate(LocalDateTime creationDate) {
+        this.creationDate = creationDate;
+    }
 
     public String getBody() {
         return body;

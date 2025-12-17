@@ -42,22 +42,44 @@ public class DataCollectorService {
         long fromEpoch = from.toEpochSecond(ZoneOffset.UTC);
         long toEpoch = to.toEpochSecond(ZoneOffset.UTC);
 
-        return Flux
-                .range(1, 50)
-                .concatMap(page ->
-                        apiClient.getQuestionsByTagAndTime(tag, fromEpoch, toEpoch, page)
-                                .delayElement(Duration.ofSeconds(1)) // 防 503
-                                .doOnNext(json -> {
-                                    JsonNode items = json.path("items");
-                                    for (JsonNode node : items) {
-                                        parseAndSaveQuestion(node);
-                                    }
-                                })
-                )
-                .takeUntil(json -> !json.path("has_more").asBoolean())
-                .then();
+        return fetchQuestionPage(tag, fromEpoch, toEpoch, 1);
     }
 
+    private Mono<Void> fetchQuestionPage(
+            String tag,
+            long fromEpoch,
+            long toEpoch,
+            int page
+    ) {
+        return apiClient
+                .getQuestionsByTagAndTime(tag, fromEpoch, toEpoch, page)
+                .flatMap(json -> {
+
+                    JsonNode items = json.path("items");
+                    for (JsonNode node : items) {
+                        parseAndSaveQuestion(node);
+                    }
+
+                    boolean hasMore = json.path("has_more").asBoolean(false);
+                    if (!hasMore) {
+                        return Mono.empty();
+                    }
+
+                    int backoff = json.path("backoff").asInt(0);
+                    Duration delay = backoff > 0
+                            ? Duration.ofSeconds(backoff)
+                            : Duration.ofSeconds(1);
+
+                    return Mono
+                            .delay(delay)
+                            .then(fetchQuestionPage(tag, fromEpoch, toEpoch, page + 1));
+                })
+                .onErrorResume(e -> {
+                    System.err.println("Page fetch failed, skip page " + page);
+                    e.printStackTrace();
+                    return Mono.empty();
+                });
+    }
 
 
 
@@ -93,7 +115,11 @@ public class DataCollectorService {
         question.setTags(tags);
 
         // body（HTML）
-        question.setBody(item.path("body").asText());
+        //question.setBody(item.path("body").asText());
+        long epoch = item.path("creation_date").asLong();
+        question.setCreationDate(
+                LocalDateTime.ofEpochSecond(epoch, 0, ZoneOffset.UTC)
+        );
 
         questionRepository.save(question);
     }
