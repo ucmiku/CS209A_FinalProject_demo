@@ -1,7 +1,8 @@
-package cs209a.finalproject_demo.dataCollection;
+package cs209a.finalproject_demo.dataCollection.controller;
 
+import cs209a.finalproject_demo.dataCollection.Service.DataCollectorService;
+import cs209a.finalproject_demo.dataCollection.Service.QuestionTitleCollectorService;
 import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 import reactor.core.publisher.Mono;
 

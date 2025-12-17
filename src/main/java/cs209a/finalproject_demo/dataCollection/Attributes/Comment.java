@@ -1,8 +1,6 @@
-package cs209a.finalproject_demo.dataCollection;
+package cs209a.finalproject_demo.dataCollection.Attributes;
 
 import jakarta.persistence.*;
-
-import java.time.LocalDateTime;
 
 @Entity
 @Table(name = "comment")

@@ -1,5 +1,6 @@
-package cs209a.finalproject_demo.dataCollection;
+package cs209a.finalproject_demo.dataCollection.Repository;
 
+import cs209a.finalproject_demo.dataCollection.Attributes.QuestionTitle;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 

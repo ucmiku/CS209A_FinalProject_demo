@@ -1,4 +1,4 @@
-package cs209a.finalproject_demo.controller;
+package cs209a.finalproject_demo.dataCollection.controller;
 
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.GetMapping;

@@ -1,4 +1,4 @@
-package cs209a.finalproject_demo.dataCollection;
+package cs209a.finalproject_demo.dataCollection.Attributes;
 
 import jakarta.persistence.*;
 

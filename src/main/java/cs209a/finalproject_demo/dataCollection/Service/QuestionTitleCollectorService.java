@@ -1,7 +1,16 @@
-package cs209a.finalproject_demo.dataCollection;
+package cs209a.finalproject_demo.dataCollection.Service;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import cs209a.finalproject_demo.dataCollection.Attributes.Answer;
+import cs209a.finalproject_demo.dataCollection.Attributes.Comment;
+import cs209a.finalproject_demo.dataCollection.Attributes.Question;
+import cs209a.finalproject_demo.dataCollection.Attributes.QuestionTitle;
+import cs209a.finalproject_demo.dataCollection.Repository.AnswerRepository;
+import cs209a.finalproject_demo.dataCollection.Repository.CommentRepository;
+import cs209a.finalproject_demo.dataCollection.Repository.QuestionRepository;
+import cs209a.finalproject_demo.dataCollection.Repository.QuestionTitleRepository;
+import cs209a.finalproject_demo.dataCollection.*;
 import jakarta.transaction.Transactional;
 import org.springframework.stereotype.Service;
 import reactor.core.publisher.Flux;
