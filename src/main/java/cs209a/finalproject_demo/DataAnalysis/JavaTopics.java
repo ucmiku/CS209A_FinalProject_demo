@@ -5,14 +5,15 @@ import java.util.Set;
 public enum JavaTopics {//用于topics到tags的映射
 
     GENERICS("generics"),
-    COLLECTIONS("collections", "java-collections"),
+    COLLECTIONS("collections", "java-collections","iterator","filter","nullpointerexception"),
+    STREAM("stream","inputstream","outputstream","java-8","lambda","java-stream"),
     IO("io", "file-io", "nio","bufferedreader"),
-    LAMBDA("lambda", "java-stream","stream"),
     MULTITHREADING("multithreading", "concurrency", "thread", "executorservice"),
-    SPRING_BOOT("spring-boot","spring-data-jpa","spring-data-rest","spring"),
-    REFLECTION("reflection"),
+    SPRING("spring-boot","spring-data-jpa","spring-data-rest","spring"),
+    REFLECTION("reflection","terminology"),
     SOCKET("socket", "networking","sockets"),
-    TEST("junit5","testing");
+    JAVAEE("javaee","java-ee-6","jakarta-ee"),
+    TEST("junit5","testing","junit");
 
     private final Set<String> tags;
 

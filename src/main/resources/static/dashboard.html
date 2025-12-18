@@ -1,0 +1,1231 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>DashBoard</title>
+
+    <!-- Chart.js (可视化库) -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-chart-matrix@2.0.1/dist/chartjs-chart-matrix.min.js"></script>
+    <script src="https://d3js.org/d3.v7.min.js"></script>
+
+
+    <style>
+        :root{
+            --bg0:#0b1220;
+            --bg1:#0f1b33;
+            --card: rgba(255,255,255,0.06);
+            --card2: rgba(255,255,255,0.09);
+            --border: rgba(255,255,255,0.12);
+            --text: rgba(255,255,255,0.92);
+            --muted: rgba(255,255,255,0.65);
+            --brand: #7aa7ff;
+            --brand2:#58d7ff;
+            --good:#40d68a;
+            --warn:#ffcc66;
+            --bad:#ff6b6b;
+            --shadow: 0 18px 60px rgba(0,0,0,0.40);
+            --radius: 18px;
+            --radius2: 14px;
+            --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+            --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, "Apple Color Emoji", "Segoe UI Emoji";
+        }
+
+        html,body{
+            height:100%;
+            margin:0;
+            font-family: var(--sans);
+            color: var(--text);
+            background:
+                    radial-gradient(1200px 800px at 15% 10%, rgba(122,167,255,0.20), transparent 60%),
+                    radial-gradient(900px 700px at 80% 20%, rgba(88,215,255,0.18), transparent 55%),
+                    radial-gradient(900px 700px at 60% 85%, rgba(64,214,138,0.10), transparent 60%),
+                    linear-gradient(180deg, var(--bg0), var(--bg1));
+            overflow-x:hidden;
+        }
+
+        .wrap{
+            max-width: 1120px;
+            margin: 0 auto;
+            padding: 28px 18px 60px;
+        }
+
+        /* Header */
+        .header{
+            display:flex;
+            align-items:flex-end;
+            justify-content:space-between;
+            gap:16px;
+            padding: 20px 22px;
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: linear-gradient(180deg, rgba(255,255,255,0.09), rgba(255,255,255,0.04));
+            box-shadow: var(--shadow);
+            backdrop-filter: blur(10px);
+        }
+
+        .titleBox h1{
+            margin:0;
+            font-size: 30px;
+            letter-spacing: 0.4px;
+        }
+        .titleBox p{
+            margin: 8px 0 0;
+            color: var(--muted);
+            line-height: 1.4;
+            font-size: 14px;
+        }
+        .pillRow{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+            align-items:center;
+            justify-content:flex-end;
+        }
+        .pill{
+            padding: 8px 12px;
+            border-radius: 999px;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.06);
+            color: var(--muted);
+            font-size: 12px;
+            user-select:none;
+        }
+        .pill strong{ color: var(--text); font-weight: 600; }
+        .pill .dot{
+            display:inline-block;
+            width:8px;height:8px;border-radius:99px;
+            background: var(--warn);
+            margin-right:8px;
+            vertical-align:middle;
+        }
+        .pill.ok .dot{ background: var(--good); }
+        .pill.bad .dot{ background: var(--bad); }
+
+        /* Accordion (details) */
+        .grid{
+            margin-top: 18px;
+            display:grid;
+            gap: 14px;
+        }
+
+        details.module{
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            background: rgba(255,255,255,0.05);
+            box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+            overflow:hidden;
+        }
+
+        details.module[open]{
+            background: rgba(255,255,255,0.06);
+        }
+
+        details.module summary{
+            list-style:none;
+            cursor:pointer;
+            padding: 16px 18px;
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+            gap:12px;
+            background: linear-gradient(180deg, rgba(255,255,255,0.10), rgba(255,255,255,0.03));
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        details.module summary::-webkit-details-marker { display:none; }
+
+        .sumLeft{
+            display:flex;
+            align-items:center;
+            gap:12px;
+            min-width: 0;
+        }
+        .badge{
+            width: 34px;
+            height: 34px;
+            border-radius: 12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            background: rgba(122,167,255,0.14);
+            border: 1px solid rgba(122,167,255,0.26);
+            font-weight:700;
+            color: rgba(255,255,255,0.92);
+            flex: 0 0 auto;
+        }
+        .sumText{
+            min-width:0;
+        }
+        .sumText .h{
+            font-weight: 700;
+            font-size: 15px;
+            margin:0;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .sumText .s{
+            margin: 4px 0 0;
+            color: var(--muted);
+            font-size: 12px;
+            line-height: 1.25;
+        }
+
+        .chev{
+            width: 34px;height: 34px;
+            border-radius: 12px;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            border: 1px solid var(--border);
+            background: rgba(255,255,255,0.05);
+            transition: transform .18s ease;
+            flex: 0 0 auto;
+        }
+        details.module[open] .chev{
+            transform: rotate(180deg);
+        }
+
+        .content{
+            padding: 16px 18px 18px;
+        }
+
+        /* Controls */
+        .panel{
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(0,0,0,0.15);
+            border-radius: var(--radius2);
+            padding: 14px;
+        }
+
+        .row{
+            display:flex;
+            flex-wrap:wrap;
+            gap: 12px;
+            align-items:flex-end;
+        }
+
+        .field{
+            display:flex;
+            flex-direction:column;
+            gap:6px;
+            min-width: 160px;
+        }
+        .field label{
+            font-size: 12px;
+            color: var(--muted);
+        }
+        input[type="date"], select, button{
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.16);
+            background: rgba(255,255,255,0.06);
+            color: var(--text);
+            padding: 10px 10px;
+            outline:none;
+        }
+        select option{ color:#111; } /* 让下拉选项在部分浏览器可读 */
+
+        button{
+            cursor:pointer;
+            font-weight: 650;
+            letter-spacing: .2px;
+        }
+        button.primary{
+            background: linear-gradient(135deg, rgba(122,167,255,0.55), rgba(88,215,255,0.35));
+            border: 1px solid rgba(122,167,255,0.30);
+        }
+        button.ghost{
+            background: rgba(255,255,255,0.05);
+        }
+        button:disabled{
+            opacity: 0.55;
+            cursor:not-allowed;
+        }
+
+        .hint{
+            margin-top:10px;
+            font-size: 12px;
+            color: var(--muted);
+            line-height:1.5;
+        }
+        .hint code{
+            font-family: var(--mono);
+            font-size: 11px;
+            padding: 2px 6px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.10);
+            color: rgba(255,255,255,0.85);
+        }
+
+        /* Topic chooser */
+        .topicBox{
+            margin-top: 12px;
+            display:grid;
+            grid-template-columns: 1fr;
+            gap: 10px;
+        }
+        @media (min-width: 860px){
+            .topicBox{
+                grid-template-columns: 1.2fr 0.8fr;
+            }
+        }
+
+        .topicList{
+            display:grid;
+            grid-template-columns: repeat(2, minmax(0,1fr));
+            gap: 10px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius2);
+            padding: 12px;
+        }
+        @media (min-width: 720px){
+            .topicList{
+                grid-template-columns: repeat(3, minmax(0,1fr));
+            }
+        }
+        .topicItem{
+            display:flex;
+            gap:10px;
+            align-items:center;
+            padding: 10px 10px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(0,0,0,0.12);
+            user-select:none;
+        }
+        .topicItem input{ transform: scale(1.1); }
+        .topicItem .t{
+            display:flex;
+            flex-direction:column;
+            gap:2px;
+            min-width:0;
+        }
+        .topicItem .t b{
+            font-size: 13px;
+            font-weight: 750;
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+        .topicItem .t span{
+            font-size: 11px;
+            color: var(--muted);
+            white-space:nowrap;
+            overflow:hidden;
+            text-overflow:ellipsis;
+        }
+
+        .topicActions{
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius2);
+            padding: 12px;
+            display:flex;
+            flex-direction:column;
+            gap:10px;
+        }
+        .quickRow{
+            display:flex;
+            flex-wrap:wrap;
+            gap:10px;
+        }
+
+        /* Chart area */
+        .chartCard{
+            margin-top: 14px;
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(255,255,255,0.04);
+            border-radius: var(--radius2);
+            padding: 12px;
+        }
+        .chartTop{
+            display:flex;
+            flex-wrap:wrap;
+            justify-content:space-between;
+            align-items:flex-end;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+        .chartTop .meta{
+            color: var(--muted);
+            font-size: 12px;
+            line-height:1.4;
+        }
+        .msg{
+            margin-top: 10px;
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.14);
+            background: rgba(0,0,0,0.18);
+            color: rgba(255,255,255,0.86);
+            font-size: 13px;
+            display:none;
+            white-space: pre-wrap;
+        }
+        .msg.bad{
+            border-color: rgba(255,107,107,0.40);
+            background: rgba(255,107,107,0.08);
+        }
+        .msg.ok{
+            border-color: rgba(64,214,138,0.40);
+            background: rgba(64,214,138,0.06);
+        }
+
+        /* table */
+        .miniTable{
+            margin-top: 12px;
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+            overflow:hidden;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.10);
+        }
+        .miniTable th, .miniTable td{
+            padding: 10px 10px;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+            text-align:left;
+        }
+        .miniTable th{
+            color: rgba(255,255,255,0.80);
+            font-weight: 700;
+            background: rgba(0,0,0,0.18);
+        }
+        .miniTable td{
+            color: rgba(255,255,255,0.88);
+        }
+        .miniTable tr:last-child td{ border-bottom:none; }
+
+        .empty{
+            color: var(--muted);
+            font-size: 13px;
+            line-height: 1.6;
+            padding: 12px;
+            border-radius: 14px;
+            border: 1px dashed rgba(255,255,255,0.18);
+            background: rgba(0,0,0,0.10);
+        }
+
+        .footer{
+            margin-top: 18px;
+            color: var(--muted);
+            font-size: 12px;
+            text-align:center;
+        }
+    </style>
+</head>
+
+<body>
+<div class="wrap">
+
+    <div class="header">
+        <div class="titleBox">
+            <h1>DashBoard</h1>
+            <p>Stack Overflow Java 数据分析面板（RESTful + PostgreSQL）</p>
+        </div>
+
+        <div class="pillRow">
+            <div class="pill" id="apiPill"><span class="dot"></span>API：<strong>/api/analytics</strong></div>
+            <div class="pill" id="statusPill"><span class="dot"></span>状态：<strong>未请求</strong></div>
+        </div>
+    </div>
+
+    <div class="grid">
+
+        <!-- Module 1: Topic Trends -->
+        <details class="module" open>
+            <summary>
+                <div class="sumLeft">
+                    <div class="badge">1</div>
+                    <div class="sumText">
+                        <p class="h">Topic Trends</p>
+                        <p class="s">按月统计各 Topic 的提问数/回答数/平均得分趋势（基于 JavaTopics 聚合）</p>
+                    </div>
+                </div>
+                <div class="chev">⌄</div>
+            </summary>
+
+            <div class="content">
+
+                <div class="panel">
+                    <div class="row">
+                        <div class="field">
+                            <label>Start Date（包含）</label>
+                            <input type="date" id="startDate" />
+                        </div>
+                        <div class="field">
+                            <label>End Date（包含，前端会自动 +1 天传给后端）</label>
+                            <input type="date" id="endDate" />
+                        </div>
+                        <div class="field">
+                            <label>Metric（图表指标）</label>
+                            <select id="metric">
+                                <option value="questionCount">Question Count</option>
+                                <option value="answerCount">Answer Count</option>
+                                <option value="avgScore">Avg Question Score</option>
+                            </select>
+                        </div>
+
+                        <div class="field" style="min-width: 220px;">
+                            <label>&nbsp;</label>
+                            <div class="quickRow">
+                                <button class="ghost" type="button" id="range6m">最近 6 个月</button>
+                                <button class="ghost" type="button" id="range1y">最近 1 年</button>
+                                <button class="ghost" type="button" id="range3y">最近 3 年</button>
+                            </div>
+                        </div>
+
+                        <div class="field" style="margin-left:auto;">
+                            <label>&nbsp;</label>
+                            <button class="primary" type="button" id="loadBtn">加载趋势</button>
+                        </div>
+                    </div>
+
+                    <div class="hint">
+                        请求将调用：
+                        <code>GET /api/analytics/topic-trends?topics=...&start=YYYY-MM-DD&end=YYYY-MM-DD</code>
+                        （topics 采用 enum 名称，例如 <code>MULTITHREADING</code> / <code>SPRING</code>）
+                    </div>
+
+                    <div class="topicBox">
+                        <div class="topicList" id="topicList"></div>
+
+                        <div class="topicActions">
+                            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                                <button class="ghost" type="button" id="selectAllBtn">全选</button>
+                                <button class="ghost" type="button" id="clearBtn">清空</button>
+                                <button class="ghost" type="button" id="selectCommonBtn">常用（MULTITHREADING/SPRING/IO/STREAM）</button>
+                            </div>
+
+                            <div class="empty">
+                                小提示：如果你发现图表没数据，通常是：
+                                <br/>1）该时间范围内没有爬到对应 tag；
+                                <br/>2）<code>question_tag</code> 还没填充（需先执行 build-question-tags）。
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+                <div class="chartCard">
+                    <div class="chartTop">
+                        <div class="meta" id="chartMeta">
+                            尚未加载数据。选择 topics + 时间范围后点击“加载趋势”。
+                        </div>
+                        <div class="meta" id="chartMeta2"></div>
+                    </div>
+
+                    <canvas id="trendChart" height="110"></canvas>
+
+                    <div class="msg" id="msgBox"></div>
+
+                    <table class="miniTable" id="summaryTable" style="display:none;">
+                        <thead>
+                        <tr>
+                            <th>Topic</th>
+                            <th>Total Questions</th>
+                            <th>Total Answers</th>
+                            <th>Weighted Avg Score</th>
+                        </tr>
+                        </thead>
+                        <tbody id="summaryBody"></tbody>
+                    </table>
+                </div>
+
+            </div>
+        </details>
+
+        <!-- Module 2: Co-occurrence -->
+        <details class="module">
+            <summary>
+                <div class="sumLeft">
+                    <div class="badge">2</div>
+                    <div class="sumText">
+                        <p class="h">Co-occurrence of Topics</p>
+                        <p class="s">Top-N Topic Pair 共现统计（待实现）</p>
+                    </div>
+                </div>
+                <div class="chev">⌄</div>
+            </summary>
+            <div class="panel">
+                <div class="row">
+                    <div class="field">
+                        <label>Start Date</label>
+                        <input type="date" id="coStart">
+                    </div>
+                    <div class="field">
+                        <label>End Date</label>
+                        <input type="date" id="coEnd">
+                    </div>
+                    <div class="field">
+                        <label>Top N (Tag Pairs)</label>
+                        <select id="coTopN">
+                            <option>10</option>
+                            <option selected>15</option>
+                            <option>20</option>
+                            <option>30</option>
+                        </select>
+                    </div>
+                    <div class="field" style="margin-left:auto;">
+                        <label>&nbsp;</label>
+                        <button class="primary" id="loadCoGraph">加载关系图</button>
+                    </div>
+                </div>
+
+                <div class="hint">
+                    网络图中：节点表示 tag，连线表示共现关系，线条越粗表示共现越频繁。
+                </div>
+            </div>
+
+            <div class="chartCard">
+                <svg id="coGraph" width="100%" height="520"></svg>
+                <div id="coInfoBox"
+                     style="
+                        margin-top: 12px;
+                        padding: 12px 16px;
+                        border-radius: 10px;
+                        background: rgba(255,255,255,0.06);
+                        color: rgba(255,255,255,0.9);
+                        font-size: 14px;
+                        min-height: 48px;
+                    ">
+                    将鼠标悬浮在任意连线上以查看 Tag 共现信息
+                </div>
+            </div>
+
+        </details>
+
+        <!-- Module 3: Multithreading Pitfalls -->
+        <details class="module">
+            <summary>
+                <div class="sumLeft">
+                    <div class="badge">3</div>
+                    <div class="sumText">
+                        <p class="h">Common Pitfalls in Multithreading</p>
+                        <p class="s">Regex/NLP 提取多线程常见坑点（待实现）</p>
+                    </div>
+                </div>
+                <div class="chev">⌄</div>
+            </summary>
+            <div class="content">
+                <div class="empty">模块 3 预留：后续实现多线程常见异常/关键词/聚类主题的统计与展示。</div>
+            </div>
+        </details>
+
+        <!-- Module 4: Solvable vs. Hard -->
+        <details class="module">
+            <summary>
+                <div class="sumLeft">
+                    <div class="badge">4</div>
+                    <div class="sumText">
+                        <p class="h">Solvable vs. Hard-to-Solve</p>
+                        <p class="s">比较可解与难解问题的特征差异（待实现）</p>
+                    </div>
+                </div>
+                <div class="chev">⌄</div>
+            </summary>
+            <div class="content">
+                <div class="empty">模块 4 预留：后续实现分组对比、关键因素（如 has_code、文本长度等）的展示。</div>
+            </div>
+        </details>
+
+    </div>
+
+    <div class="footer">
+        © DashBoard · Spring Boot + PostgreSQL · /api/analytics
+    </div>
+</div>
+
+<script>
+    // ====== 配置 ======
+    const API_BASE = "/api/analytics";
+
+    // 你的 JavaTopics enum（用于前端选择）
+    const TOPICS = [
+        { value: "GENERICS",       label: "Generics"},
+        { value: "COLLECTIONS",    label: "Collections" },
+        { value: "STREAM",         label: "Stream & Lambda" },
+        { value: "IO",             label: "I/O" },
+        { value: "MULTITHREADING", label: "Multithreading" },
+        { value: "SPRING",         label: "Spring" },
+        { value: "REFLECTION",     label: "Reflection" },
+        { value: "SOCKET",         label: "Socket"},
+        { value: "JAVAEE",         label: "Java EE"},
+        { value: "TEST",           label: "Testing" }
+    ];
+
+    // ====== DOM ======
+    const topicListEl = document.getElementById("topicList");
+    const startEl = document.getElementById("startDate");
+    const endEl = document.getElementById("endDate");
+    const metricEl = document.getElementById("metric");
+    const loadBtn = document.getElementById("loadBtn");
+    const msgBox = document.getElementById("msgBox");
+    const chartMeta = document.getElementById("chartMeta");
+    const chartMeta2 = document.getElementById("chartMeta2");
+    const statusPill = document.getElementById("statusPill");
+    const summaryTable = document.getElementById("summaryTable");
+    const summaryBody = document.getElementById("summaryBody");
+
+    // ====== 初始化默认日期：最近 3 年 ======
+    function fmtDate(d){
+        const y = d.getFullYear();
+        const m = String(d.getMonth()+1).padStart(2,"0");
+        const day = String(d.getDate()).padStart(2,"0");
+        return `${y}-${m}-${day}`;
+    }
+    function addDays(dateStr, days){
+        const d = new Date(dateStr + "T00:00:00");
+        d.setDate(d.getDate() + days);
+        return fmtDate(d);
+    }
+
+    (function initDates(){
+        const now = new Date();
+        const end = fmtDate(now);
+        const start = fmtDate(new Date(now.getFullYear()-3, now.getMonth(), now.getDate()));
+        startEl.value = start;
+        endEl.value = end;
+    })();
+
+    // ====== 渲染 Topic 选择 ======
+    function renderTopics(){
+        topicListEl.innerHTML = "";
+        TOPICS.forEach(t => {
+            const id = "t_" + t.value;
+            const div = document.createElement("label");
+            div.className = "topicItem";
+            div.setAttribute("for", id);
+            div.innerHTML = `
+          <input type="checkbox" id="${id}" data-topic="${t.value}">
+          <div class="t">
+            <b>${t.label}</b>
+            <span>${t.value} · ${t.tagsHint}</span>
+          </div>
+        `;
+            topicListEl.appendChild(div);
+        });
+        // 默认勾选常用
+        ["MULTITHREADING","SPRING","IO","STREAM"].forEach(v=>{
+            const cb = document.querySelector(`#t_${v}`);
+            if(cb) cb.checked = true;
+        });
+    }
+    renderTopics();
+
+    function getSelectedTopics(){
+        const cbs = topicListEl.querySelectorAll("input[type=checkbox]");
+        return Array.from(cbs).filter(cb => cb.checked).map(cb => cb.dataset.topic);
+    }
+
+    document.getElementById("selectAllBtn").addEventListener("click", ()=>{
+        topicListEl.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = true);
+    });
+
+    document.getElementById("clearBtn").addEventListener("click", ()=>{
+        topicListEl.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+    });
+
+    document.getElementById("selectCommonBtn").addEventListener("click", ()=>{
+        topicListEl.querySelectorAll("input[type=checkbox]").forEach(cb => cb.checked = false);
+        ["MULTITHREADING","SPRING","IO","STREAM"].forEach(v=>{
+            const cb = document.querySelector(`#t_${v}`);
+            if(cb) cb.checked = true;
+        });
+    });
+
+    // Quick ranges
+    document.getElementById("range6m").addEventListener("click", ()=>{
+        const now = new Date();
+        endEl.value = fmtDate(now);
+        const d = new Date(now);
+        d.setMonth(d.getMonth()-6);
+        startEl.value = fmtDate(d);
+    });
+    document.getElementById("range1y").addEventListener("click", ()=>{
+        const now = new Date();
+        endEl.value = fmtDate(now);
+        const d = new Date(now);
+        d.setFullYear(d.getFullYear()-1);
+        startEl.value = fmtDate(d);
+    });
+    document.getElementById("range3y").addEventListener("click", ()=>{
+        const now = new Date();
+        endEl.value = fmtDate(now);
+        const d = new Date(now);
+        d.setFullYear(d.getFullYear()-3);
+        startEl.value = fmtDate(d);
+    });
+
+    // ====== 图表 ======
+    let chart = null;
+
+    function hslColor(i, n){
+        const hue = Math.round((i * 360) / Math.max(n,1));
+        return `hsl(${hue}, 80%, 65%)`;
+    }
+
+    function showMsg(text, type="ok"){
+        msgBox.style.display = "block";
+        msgBox.className = "msg " + (type === "bad" ? "bad" : "ok");
+        msgBox.textContent = text;
+    }
+    function hideMsg(){
+        msgBox.style.display = "none";
+        msgBox.textContent = "";
+    }
+    function setStatus(text, state="warn"){
+        const dot = statusPill.querySelector(".dot");
+        const strong = statusPill.querySelector("strong");
+        strong.textContent = text;
+        statusPill.classList.remove("ok","bad");
+        if(state === "ok") statusPill.classList.add("ok");
+        if(state === "bad") statusPill.classList.add("bad");
+        dot.style.background = (state === "ok") ? "var(--good)" : (state === "bad") ? "var(--bad)" : "var(--warn)";
+    }
+
+    function buildChart(labels, datasets, metricLabel){
+        const ctx = document.getElementById("trendChart").getContext("2d");
+        if(chart) chart.destroy();
+        chart = new Chart(ctx, {
+            type: "line",
+            data: { labels, datasets },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                interaction: { mode: "index", intersect: false },
+                plugins: {
+                    legend: { labels: { color: "rgba(255,255,255,0.85)" } },
+                    tooltip: { enabled: true }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: "rgba(255,255,255,0.70)" },
+                        grid: { color: "rgba(255,255,255,0.06)" }
+                    },
+                    y: {
+                        title: { display: true, text: metricLabel, color: "rgba(255,255,255,0.75)" },
+                        ticks: { color: "rgba(255,255,255,0.70)" },
+                        grid: { color: "rgba(255,255,255,0.06)" }
+                    }
+                }
+            }
+        });
+    }
+
+    function renderSummary(trends){
+        // trends: [{topic, points:[{month, questionCount, answerCount, avgScore}]}]
+        summaryBody.innerHTML = "";
+        if(!trends || trends.length === 0){
+            summaryTable.style.display = "none";
+            return;
+        }
+        for(const t of trends){
+            let tq = 0, ta = 0;
+            let weightedScoreSum = 0, weight = 0;
+
+            for(const p of (t.points || [])){
+                tq += Number(p.questionCount || 0);
+                ta += Number(p.answerCount || 0);
+                const qCnt = Number(p.questionCount || 0);
+                const avg = Number(p.avgScore || 0);
+                if(qCnt > 0){
+                    weightedScoreSum += avg * qCnt;
+                    weight += qCnt;
+                }
+            }
+            const wAvg = weight > 0 ? (weightedScoreSum / weight) : 0;
+
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+          <td style="font-family: var(--mono);">${t.topic}</td>
+          <td>${tq}</td>
+          <td>${ta}</td>
+          <td>${wAvg.toFixed(2)}</td>
+        `;
+            summaryBody.appendChild(tr);
+        }
+        summaryTable.style.display = "";
+    }
+
+    // ====== 加载趋势：调用后端 ======
+    async function loadTrend(){
+        hideMsg();
+        setStatus("请求中…", "warn");
+        loadBtn.disabled = true;
+
+        const selected = getSelectedTopics();
+        if(selected.length === 0){
+            showMsg("请至少选择 1 个 Topic。", "bad");
+            setStatus("参数错误", "bad");
+            loadBtn.disabled = false;
+            return;
+        }
+
+        const start = startEl.value;
+        const endInclusive = endEl.value;
+        if(!start || !endInclusive){
+            showMsg("请选择 start / end 日期。", "bad");
+            setStatus("参数错误", "bad");
+            loadBtn.disabled = false;
+            return;
+        }
+
+        // 为了用户直觉：End 输入框是“包含”，但后端查询通常用 < end
+        // 所以前端自动 end + 1 day 传给后端
+        const endExclusive = addDays(endInclusive, 1);
+
+        const metric = metricEl.value;
+        const metricLabel =
+            metric === "questionCount" ? "Questions" :
+                metric === "answerCount" ? "Answers" : "Avg Score";
+
+        // 构造 URL（topics 采用重复参数，最稳）
+        const params = new URLSearchParams();
+        selected.forEach(t => params.append("topics", t));
+        params.set("start", start);
+        params.set("end", endExclusive);
+
+        const url = `${API_BASE}/topic-trends?${params.toString()}`;
+
+        try{
+            chartMeta.textContent = `请求：${url}`;
+            chartMeta2.textContent = `Metric：${metricLabel} · End(含)：${endInclusive}（传后端为 ${endExclusive}）`;
+
+            const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+
+            if(!res.ok){
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status} ${res.statusText}\n${text}`);
+            }
+
+            const data = await res.json(); // Array<TopicTrend>
+            setStatus("成功", "ok");
+
+            if(!Array.isArray(data) || data.length === 0){
+                showMsg("后端返回空数据（数组为空）。检查时间范围或 question_tag 是否已填充。", "bad");
+                loadBtn.disabled = false;
+                return;
+            }
+
+            // 收集所有月份（union）
+            const months = new Set();
+            data.forEach(t => (t.points || []).forEach(p => months.add(p.month)));
+            const labels = Array.from(months).sort(); // YYYY-MM 可直接排序
+
+            // 构造 datasets
+            const datasets = data.map((t, i) => {
+                const color = hslColor(i, data.length);
+                const m = new Map((t.points || []).map(p => [p.month, p]));
+                const values = labels.map(month => {
+                    const p = m.get(month);
+                    if(!p) return (metric === "avgScore" ? null : 0);
+                    return Number(p[metric] ?? (metric === "avgScore" ? null : 0));
+                });
+
+                return {
+                    label: t.topic,
+                    data: values,
+                    borderColor: color,
+                    backgroundColor: color,
+                    borderWidth: 2,
+                    tension: 0.25,
+                    pointRadius: 2,
+                    pointHoverRadius: 4
+                };
+            });
+
+            buildChart(labels, datasets, metricLabel);
+            renderSummary(data);
+            showMsg(`已加载 ${data.length} 个 Topic 的趋势数据。`, "ok");
+
+        }catch(err){
+            console.error(err);
+            setStatus("失败", "bad");
+            showMsg(`请求失败：\n${err.message}\n\n请确认：\n1) 后端已启动；\n2) /api/analytics/topic-trends 可访问；\n3) 传入的 topics 是 JavaTopics enum 名称；\n4) 时间范围内确实有数据。`, "bad");
+        }finally{
+            loadBtn.disabled = false;
+        }
+    }
+
+    loadBtn.addEventListener("click", loadTrend);
+</script>
+
+<script>
+    // ===== Module 2: Tag Co-occurrence Network Graph =====
+    const tooltip = d3.select("#graphTooltip");
+    tooltip
+        .style("opacity", 1)
+        .style("left", "200px")
+        .style("top", "200px")
+        .html("TOOLTIP OK");
+
+    const loadCoGraphBtn = document.getElementById("loadCoGraph");
+    const coGraphSvg = d3.select("#coGraph");
+    const infoBox = d3.select("#coInfoBox");
+
+
+    coStart.value = startEl.value;
+    coEnd.value = endEl.value;
+
+    loadCoGraphBtn.addEventListener("click", async () => {
+        coGraphSvg.selectAll("*").remove();
+
+        const padding = 40;
+        const start = coStart.value;
+        const end = addDays(coEnd.value, 1);
+        const topN = coTopN.value;
+
+        const url = `${API_BASE}/tag-cooccurrence?start=${start}&end=${end}&topN=${topN}`;
+
+        try {
+            const data = await fetch(url).then(r => r.json());
+            if (!data || data.length === 0) return;
+
+            // 1️⃣ 构造节点和边
+            const nodeMap = new Map();
+            const links = [];
+
+            data.forEach(d => {
+                if (!nodeMap.has(d.tagA)) nodeMap.set(d.tagA, { id: d.tagA });
+                if (!nodeMap.has(d.tagB)) nodeMap.set(d.tagB, { id: d.tagB });
+                links.push({
+                    source: d.tagA,
+                    target: d.tagB,
+                    value: d.count
+                });
+            });
+
+            const nodes = Array.from(nodeMap.values());
+            const maxVal = d3.max(links, d => d.value);
+
+            // 2️⃣ SVG 尺寸
+            const width = coGraphSvg.node().clientWidth;
+            const height = 520;
+
+            // 3️⃣ 力导向模拟
+            const simulation = d3.forceSimulation(nodes)
+                .force("link", d3.forceLink(links)
+                    .id(d => d.id)
+                    .distance(120)
+                    .strength(0.6))
+                .force("charge", d3.forceManyBody().strength(-280))
+                .force("center", d3.forceCenter(width / 2, height / 2));
+
+            // 4️⃣ 边（图下文本框版本）
+            const link = coGraphSvg.append("g")
+                .attr("stroke", "#7aa7ff")
+                .attr("stroke-opacity", 0.6)
+                .selectAll("line")
+                .data(links)
+                .enter()
+                .append("line")
+                .attr("stroke-width", d => 2 + 10 * (d.value / maxVal))
+                    .on("mousemove", function (event, d) {
+
+                    // ① 高亮当前连线
+                    d3.select(this)
+                        .attr("stroke", "#ffcc66")
+                        .attr("stroke-opacity", 1);
+
+                    // ② 更新下方文本框
+                    infoBox.html(`
+      <strong>${d.source.id}</strong> × <strong>${d.target.id}</strong>
+      &nbsp;&nbsp;|&nbsp;&nbsp;
+      共现问题数：<strong>${d.value}</strong>
+    `);
+                })
+                .on("mouseleave", function () {
+
+                    // ③ 恢复连线样式
+                    d3.select(this)
+                        .attr("stroke", "#7aa7ff")
+                        .attr("stroke-opacity", 0.6);
+
+                    // ④ 恢复文本框默认内容
+                    infoBox.text("将鼠标悬浮在任意连线上以查看 Tag 共现信息");
+                });
+
+
+
+            // 先计算每个节点的度数
+            const degreeMap = {};
+            links.forEach(l => {
+                const s = l.source.id ?? l.source;
+                const t = l.target.id ?? l.target;
+                degreeMap[s] = (degreeMap[s] || 0) + 1;
+                degreeMap[t] = (degreeMap[t] || 0) + 1;
+            });
+
+            // 创建比例尺
+            const nodeSize = d3.scaleLinear()
+                .domain(d3.extent(Object.values(degreeMap)))
+                .range([10, 18]);
+
+            let lockedNode = null;
+
+            // 5️⃣ 节点
+            const node = coGraphSvg.append("g")
+                .attr("stroke", "#fff")
+                .attr("stroke-width", 1.5)
+                .selectAll("circle")
+                .data(nodes)
+                .enter()
+                .append("circle")
+                .attr("r", d => nodeSize(degreeMap[d.id] || 1))
+                .attr("fill", "#40d68a")
+                .style("cursor", "pointer")
+                .on("mousemove", function (event, d) {
+
+                    // 高亮节点
+                    d3.select(this)
+                        .attr("fill", "#ffd166");
+
+                    // 更新信息框
+                    infoBox.html(`
+      <strong>Tag：</strong>${d.id}<br/>
+      <strong>关联 Tag 数：</strong>${adjacency[d.id].size}
+    `);
+                })
+                .on("mouseleave", function () {
+
+                    d3.select(this)
+                        .attr("fill", "#40d68a");
+
+                    infoBox.text("将鼠标悬浮在任意节点或连线上以查看信息");
+                })
+                .on("click", function (event, d) {
+
+                    // 取消锁定
+                    if (lockedNode === d.id) {
+                        lockedNode = null;
+
+                        node.style("opacity", 1);
+                        link.style("opacity", 0.6);
+                        label.style("opacity", 1);
+
+                        infoBox.text("已取消锁定，显示完整关系图");
+                        return;
+                    }
+
+                    // 锁定该节点
+                    lockedNode = d.id;
+                    const neighbors = adjacency[d.id];
+
+                    // 节点可见性
+                    node.style("opacity", n =>
+                        n.id === d.id || neighbors.has(n.id) ? 1 : 0.1
+                    );
+
+                    // 边可见性
+                    link.style("opacity", l => {
+                        const s = l.source.id ?? l.source;
+                        const t = l.target.id ?? l.target;
+                        return (s === d.id || t === d.id) ? 0.9 : 0.05;
+                    });
+
+                    // 标签可见性
+                    label.style("opacity", n =>
+                        n.id === d.id || neighbors.has(n.id) ? 1 : 0.1
+                    );
+
+                    infoBox.html(`
+                    <strong>锁定 Tag：</strong>${d.id}<br/>
+                    <strong>直接关联 Tag：</strong>${neighbors.size}
+                    `);
+                });
+
+
+
+            const adjacency = {};
+            nodes.forEach(n => adjacency[n.id] = new Set());
+
+            links.forEach(l => {
+                const s = l.source.id ?? l.source;
+                const t = l.target.id ?? l.target;
+                adjacency[s].add(t);
+                adjacency[t].add(s);
+            });
+
+            // 6️⃣ 标签
+            const label = coGraphSvg.append("g")
+                .selectAll("text")
+                .data(nodes)
+                .enter()
+                .append("text")
+                .text(d => d.id)
+                .attr("font-size", "11px")
+                .attr("fill", "rgba(255,255,255,0.85)")
+                .attr("dx", 18)
+                .attr("dy", ".35em");
+
+            // 7️⃣ Tooltip
+            node.append("title")
+                .text(d => d.id);
+
+
+            simulation.on("tick", () => {
+
+                nodes.forEach(d => {
+                    d.x = Math.max(padding, Math.min(width - padding, d.x));
+                    d.y = Math.max(padding, Math.min(height - padding, d.y));
+                });
+
+                link
+                    .attr("x1", d => d.source.x)
+                    .attr("y1", d => d.source.y)
+                    .attr("x2", d => d.target.x)
+                    .attr("y2", d => d.target.y);
+
+                node
+                    .attr("cx", d => d.x)
+                    .attr("cy", d => d.y);
+
+                label
+                    .attr("x", d => d.x)
+                    .attr("y", d => d.y);
+            });
+
+
+            function dragstarted(event, d) {
+                if (!event.active) simulation.alphaTarget(0.3).restart();
+                d.fx = d.x;
+                d.fy = d.y;
+            }
+            function dragged(event, d) {
+                d.fx = event.x;
+                d.fy = event.y;
+            }
+            function dragended(event, d) {
+                if (!event.active) simulation.alphaTarget(0);
+                d.fx = null;
+                d.fy = null;
+            }
+
+        } catch (e) {
+            console.error(e);
+        }
+    });
+
+</script>
+<div id="graphTooltip"
+     style="
+       position: fixed;
+       padding: 8px 12px;
+       background: rgba(0,0,0,0.75);
+       color: #fff;
+       font-size: 12px;
+       border-radius: 8px;
+       pointer-events: none;
+       opacity: 0;
+       transition: opacity 0.15s;
+       z-index: 10000;
+     ">
+</div>
+
+
+</body>
+</html>
