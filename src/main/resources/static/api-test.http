@@ -1,0 +1,46 @@
+### ============================================
+### Stack Overflow 数据采集与分析完整流程
+### ============================================
+
+### 1. 检查应用状态
+GET http://localhost:8080/
+
+### 2. 清理旧数据（如果需要重新开始）
+DELETE http://localhost:8080/api/admin/clear-data
+
+### 3. 第一阶段：数据采集
+### 3.1 爬取问题基础数据（使用2024年的实际时间）
+GET http://localhost:8080/collector/collect?tag=java&from=2024-01-01T00:00:00&to=2024-01-03T23:59:59
+
+### 等待数据保存完成
+### 可以在代码中添加延迟，或手动等待10秒
+
+### 3.2 爬取问题标题和正文（分表1）
+GET http://localhost:8080/collector/collect-titles
+
+### 3.3 爬取答案（分表2）
+GET http://localhost:8080/collector/collect-answers
+
+### 3.4 爬取评论（分表3）
+GET http://localhost:8080/collector/collect-comments
+
+### 4. 第二阶段：数据分表处理
+### 4.1 构建标签关系表（最重要的分表操作）
+POST http://localhost:8080/api/admin/build-question-tags
+
+### 5. 第三阶段：数据分析
+### 5.1 标签共现分析
+GET http://localhost:8080/api/analytics/tag-cooccurrence?start=2024-01-01&end=2024-12-31&topN=15
+
+### 5.2 Java主题趋势分析（多主题）
+GET http://localhost:8080/api/analytics/topic-trends?topics=GENERICS,COLLECTIONS,STREAM,SPRING,MULTITHREADING&start=2024-01-01&end=2024-12-31
+
+### 5.3 单个主题详细分析
+GET http://localhost:8080/api/analytics/topic-trends?topics=SPRING&start=2024-01-01&end=2024-12-31
+
+### 6. 数据统计报告
+### 6.1 获取数据量统计
+GET http://localhost:8080/api/admin/stats
+
+### 7. 数据库检查SQL（在DataGrip中执行）
+# 查看下方注释中的SQL语句
