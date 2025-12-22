@@ -99,7 +99,7 @@ public class QuestionTitleCollectorService {
         return Mono.fromCallable(titleRepository::findAllQuestionIds)
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
-                .filter(id -> id >= 79777766)
+                .filter(id -> id <= 79790013)
                 .flatMap(this::fetchAndSaveComments, 3)
                 .then();
     }

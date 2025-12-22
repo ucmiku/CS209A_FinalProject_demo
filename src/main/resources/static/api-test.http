@@ -11,7 +11,7 @@ GET http://localhost:8080/
 
 ### 3. 第一阶段：数据采集
 ### 3.1 爬取问题基础数据（使用2024年的实际时间）
-GET http://localhost:8080/collector/collect?tag=java&from=2025-01-01T00:00:00&to=2025-01-03T23:59:59
+GET http://localhost:8080/collector/collect?tag=java&from=2025-10-20T00:00:00&to=2025-11-27T23:59:59
 
 ### 等待数据保存完成（建议等待10-30秒）
 ### 可以在代码中添加延迟，或手动等待10秒
@@ -32,7 +32,7 @@ POST http://localhost:8080/api/admin/build-question-tags
 
 ### 5. 第三阶段：数据分析（现有API）
 ### 5.1 标签共现分析 - 核心数据分析API 1
-GET http://localhost:8080/api/analytics/tag-cooccurrence?start=2025-01-01&end=2025-01-02
+GET http://localhost:8080/api/analytics/tag-cooccurrence?start=2025-01-02&end=2025-12-02
 
 ### 5.2 Java主题趋势分析（多主题）- 核心数据分析API 2
 ### 支持的JavaTopics枚举：GENERICS, COLLECTIONS, STREAM, IO, MULTITHREADING,
