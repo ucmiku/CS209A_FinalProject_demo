@@ -140,6 +140,7 @@ public class QuestionTitleCollectorService {
         List<Long> allIds = questionRepository.findAll()
                 .stream()
                 .map(Question::getQuestionId)
+                .filter(id -> id <= 79321014)
                 .toList();
 
         List<List<Long>> batches = partition(allIds, BATCH_SIZE);
