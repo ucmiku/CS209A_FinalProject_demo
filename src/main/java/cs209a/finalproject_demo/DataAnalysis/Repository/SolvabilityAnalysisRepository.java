@@ -43,10 +43,17 @@ public class SolvabilityAnalysisRepository {
                 EXISTS (SELECT 1 FROM answer a WHERE a.question_id = q.question_id AND a.is_accepted = true) as has_accepted_answer,
                 -- 最高答案得分
                 COALESCE((SELECT MAX(score) FROM answer a WHERE a.question_id = q.question_id), 0) as max_answer_score,
-                -- 是否可解答（定义：有接受答案或最高答案得分>5）
+                -- 是否可解答（仅当“5 天内有被接受且该回答分数 > 1”）
                 CASE 
-                    WHEN EXISTS (SELECT 1 FROM answer a WHERE a.question_id = q.question_id AND a.is_accepted = true) THEN true
-                    WHEN (SELECT MAX(score) FROM answer a WHERE a.question_id = q.question_id) > 5 THEN true
+                    WHEN EXISTS (
+                        SELECT 1
+                        FROM answer a
+                        WHERE a.question_id = q.question_id
+                        AND a.is_accepted = true
+                        AND a.score > 1
+                        AND a.creation_date >= q.creation_date
+                        AND a.creation_date <= q.creation_date + INTERVAL '5 days'
+                    ) THEN true
                     ELSE false
                 END as is_solvable
             FROM question q
@@ -71,8 +78,15 @@ public class SolvabilityAnalysisRepository {
             WITH metrics AS (
                 SELECT 
                     CASE 
-                        WHEN EXISTS (SELECT 1 FROM answer a WHERE a.question_id = q.question_id AND a.is_accepted = true) THEN true
-                        WHEN (SELECT MAX(score) FROM answer a WHERE a.question_id = q.question_id) > 5 THEN true
+                        WHEN EXISTS (
+                            SELECT 1
+                            FROM answer a
+                            WHERE a.question_id = q.question_id
+                            AND a.is_accepted = true
+                            AND a.score > 1
+                            AND a.creation_date >= q.creation_date
+                            AND a.creation_date <= q.creation_date + INTERVAL '5 days'
+                        ) THEN true
                         ELSE false
                     END as is_solvable,
                     CASE 

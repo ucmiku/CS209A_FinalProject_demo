@@ -440,6 +440,70 @@
             border-radius: 12px;
             padding: 10px;
         }
+        .factorViz{
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        .factorLegend{
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            font-size: 12px;
+            color: var(--muted);
+        }
+        .factorLegend .dot{
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 99px;
+            margin-right: 6px;
+            vertical-align: middle;
+        }
+        .factorRow{
+            display: grid;
+            grid-template-columns: 160px 1fr;
+            gap: 12px;
+            align-items: start;
+        }
+        .factorLabel{
+            font-size: 12px;
+            color: var(--muted);
+            line-height: 1.4;
+        }
+        .factorBars{
+            display: grid;
+            gap: 8px;
+        }
+        .factorBarRow{
+            display: grid;
+            grid-template-columns: 90px 1fr auto;
+            gap: 8px;
+            align-items: center;
+        }
+        .factorTag{
+            font-size: 11px;
+            color: var(--muted);
+            text-transform: uppercase;
+            letter-spacing: 0.4px;
+        }
+        .factorBar{
+            position: relative;
+            height: 8px;
+            border-radius: 999px;
+            background: rgba(255,255,255,0.08);
+            overflow: hidden;
+        }
+        .factorFill{
+            height: 100%;
+            display: block;
+            border-radius: 999px;
+        }
+        .factorValue{
+            font-size: 11px;
+            color: var(--text);
+            white-space: nowrap;
+        }
         @media (min-width: 900px){
             .chartGrid{
                 grid-template-columns: 0.8fr 1.2fr;
@@ -766,7 +830,7 @@
                     <div class="badge">4</div>
                     <div class="sumText">
                         <p class="h">Solvable vs. Hard-to-Solve</p>
-                        <p class="s">Compare solvable vs. hard-to-solve questions across key factors.</p>
+                        <p class="s">Compare solvable vs. hard-to-solve questions across key factors. Questions within 10 days are labeled unknown.</p>
                     </div>
                 </div>
                 <div class="chev">v</div>
@@ -812,6 +876,10 @@
                             <span class="label">Hard-to-solve</span>
                             <b id="unsolvPct">-</b>
                         </div>
+                        <div class="stat">
+                            <span class="label">Unknown (<=10 days)</span>
+                            <b id="unknownPct">-</b>
+                        </div>
                     </div>
 
                     <div class="chartGrid">
@@ -819,7 +887,12 @@
                             <canvas id="solvDonut" height="200"></canvas>
                         </div>
                         <div class="chartBox">
-                            <canvas id="solvFactorsChart" height="200"></canvas>
+                            <div class="factorViz" id="solvFactorsViz">
+                                <div class="factorLegend">
+                                    <span><span class="dot" style="background: rgba(64,214,138,0.85);"></span>Solvable</span>
+                                    <span><span class="dot" style="background: rgba(255,107,107,0.85);"></span>Hard-to-solve</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -840,6 +913,7 @@
 
                     <div class="hint">
                         Positive differences mean solvable questions have higher values for that factor.
+                        Each factor bar is scaled within its own range for visibility.
                     </div>
                 </div>
             </div>
@@ -1617,10 +1691,11 @@
     const solvTotal = document.getElementById("solvTotal");
     const solvPct = document.getElementById("solvPct");
     const unsolvPct = document.getElementById("unsolvPct");
+    const unknownPct = document.getElementById("unknownPct");
     const solvTable = document.getElementById("solvTable");
     const solvBody = document.getElementById("solvBody");
     const solvDonutEl = document.getElementById("solvDonut");
-    const solvFactorsChartEl = document.getElementById("solvFactorsChart");
+    const solvFactorsViz = document.getElementById("solvFactorsViz");
 
     if (solvStartEl && solvEndEl && startEl && endEl){
         solvStartEl.value = startEl.value;
@@ -1628,7 +1703,6 @@
     }
 
     let solvDonut = null;
-    let solvFactorsChart = null;
 
     function showSolvMsg(text, type = "ok"){
         if(!solvMsg) return;
@@ -1673,18 +1747,87 @@
         solvTable.style.display = factors.length ? "" : "none";
     }
 
-    function renderSolvCharts(summary, factors){
+    function renderSolvFactorsViz(factors){
+        if(!solvFactorsViz) return;
+        const legend = solvFactorsViz.querySelector(".factorLegend");
+        solvFactorsViz.innerHTML = "";
+        if(legend) solvFactorsViz.appendChild(legend);
+        if(!factors || factors.length === 0) return;
+
+        factors.forEach(factor => {
+            const solvVal = toNumber(factor.solvableValue);
+            const hardVal = toNumber(factor.unsolvableValue);
+            const maxVal = Math.max(solvVal, hardVal, 1);
+
+            const row = document.createElement("div");
+            row.className = "factorRow";
+
+            const label = document.createElement("div");
+            label.className = "factorLabel";
+            label.textContent = factor.factorName || "Factor";
+
+            const bars = document.createElement("div");
+            bars.className = "factorBars";
+
+            const solvRow = document.createElement("div");
+            solvRow.className = "factorBarRow";
+            const solvTag = document.createElement("span");
+            solvTag.className = "factorTag";
+            solvTag.textContent = "Solvable";
+            const solvBar = document.createElement("div");
+            solvBar.className = "factorBar";
+            const solvFill = document.createElement("span");
+            solvFill.className = "factorFill";
+            solvFill.style.background = "rgba(64,214,138,0.85)";
+            solvFill.style.width = `${(solvVal / maxVal) * 100}%`;
+            solvBar.appendChild(solvFill);
+            const solvValue = document.createElement("span");
+            solvValue.className = "factorValue";
+            solvValue.textContent = `${solvVal.toFixed(2)} ${factor.unit || ""}`.trim();
+            solvRow.appendChild(solvTag);
+            solvRow.appendChild(solvBar);
+            solvRow.appendChild(solvValue);
+
+            const hardRow = document.createElement("div");
+            hardRow.className = "factorBarRow";
+            const hardTag = document.createElement("span");
+            hardTag.className = "factorTag";
+            hardTag.textContent = "Hard";
+            const hardBar = document.createElement("div");
+            hardBar.className = "factorBar";
+            const hardFill = document.createElement("span");
+            hardFill.className = "factorFill";
+            hardFill.style.background = "rgba(255,107,107,0.85)";
+            hardFill.style.width = `${(hardVal / maxVal) * 100}%`;
+            hardBar.appendChild(hardFill);
+            const hardValue = document.createElement("span");
+            hardValue.className = "factorValue";
+            hardValue.textContent = `${hardVal.toFixed(2)} ${factor.unit || ""}`.trim();
+            hardRow.appendChild(hardTag);
+            hardRow.appendChild(hardBar);
+            hardRow.appendChild(hardValue);
+
+            bars.appendChild(solvRow);
+            bars.appendChild(hardRow);
+
+            row.appendChild(label);
+            row.appendChild(bars);
+            solvFactorsViz.appendChild(row);
+        });
+    }
+
+    function renderSolvCharts(summary){
         if(solvDonutEl){
             const ctx = solvDonutEl.getContext("2d");
             if(solvDonut) solvDonut.destroy();
             solvDonut = new Chart(ctx, {
                 type: "doughnut",
                 data: {
-                    labels: ["Solvable", "Hard-to-solve"],
+                    labels: ["Solvable", "Hard-to-solve", "Unknown (<=10 days)"],
                     datasets: [{
-                        data: [summary.solvableCount, summary.unsolvableCount],
-                        backgroundColor: ["rgba(64,214,138,0.85)", "rgba(255,107,107,0.85)"],
-                        borderColor: ["rgba(64,214,138,1)", "rgba(255,107,107,1)"],
+                        data: [summary.solvableCount, summary.unsolvableCount, summary.unknownCount],
+                        backgroundColor: ["rgba(64,214,138,0.85)", "rgba(255,107,107,0.85)", "rgba(255,204,102,0.85)"],
+                        borderColor: ["rgba(64,214,138,1)", "rgba(255,107,107,1)", "rgba(255,204,102,1)"],
                         borderWidth: 1
                     }]
                 },
@@ -1693,54 +1836,6 @@
                     maintainAspectRatio: true,
                     plugins: {
                         legend: { labels: { color: chartLabelColor } }
-                    }
-                }
-            });
-        }
-
-        if(solvFactorsChartEl){
-            const labels = factors.map(f => f.factorName || "Factor");
-            const solvValues = factors.map(f => toNumber(f.solvableValue));
-            const hardValues = factors.map(f => toNumber(f.unsolvableValue));
-            const ctx = solvFactorsChartEl.getContext("2d");
-            if(solvFactorsChart) solvFactorsChart.destroy();
-            solvFactorsChart = new Chart(ctx, {
-                type: "bar",
-                data: {
-                    labels,
-                    datasets: [
-                        {
-                            label: "Solvable",
-                            data: solvValues,
-                            backgroundColor: "rgba(64,214,138,0.6)",
-                            borderColor: "rgba(64,214,138,0.9)",
-                            borderWidth: 1
-                        },
-                        {
-                            label: "Hard-to-solve",
-                            data: hardValues,
-                            backgroundColor: "rgba(255,107,107,0.55)",
-                            borderColor: "rgba(255,107,107,0.9)",
-                            borderWidth: 1
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: true,
-                    indexAxis: "y",
-                    plugins: {
-                        legend: { labels: { color: chartLabelColor } }
-                    },
-                    scales: {
-                        x: {
-                            ticks: { color: chartTickColor },
-                            grid: { color: chartGridColor }
-                        },
-                        y: {
-                            ticks: { color: chartTickColor },
-                            grid: { color: chartGridColor }
-                        }
                     }
                 }
             });
@@ -1775,8 +1870,10 @@
             const totalQuestions = toNumber(data.total_questions);
             const solvableCount = toNumber(data.solvable_count);
             const unsolvableCount = toNumber(data.unsolvable_count);
+            const unknownCount = toNumber(data.unknown_count);
             const solvablePct = Number(data.solvable_percentage);
             const unsolvablePct = Number(data.unsolvable_percentage);
+            const unknownPctValue = Number(data.unknown_percentage);
             const factors = Array.isArray(data.analysis_factors) ? data.analysis_factors : [];
 
             if(solvTotal) solvTotal.textContent = String(totalQuestions);
@@ -1786,9 +1883,13 @@
             if(unsolvPct) unsolvPct.textContent = Number.isFinite(unsolvablePct) ?
                 `${unsolvablePct.toFixed(2)}% (${unsolvableCount})` :
                 `${unsolvableCount}`;
+            if(unknownPct) unknownPct.textContent = Number.isFinite(unknownPctValue) ?
+                `${unknownPctValue.toFixed(2)}% (${unknownCount})` :
+                `${unknownCount}`;
             if(solvStats) solvStats.style.display = "";
 
-            renderSolvCharts({ solvableCount, unsolvableCount }, factors);
+            renderSolvCharts({ solvableCount, unsolvableCount, unknownCount });
+            renderSolvFactorsViz(factors);
             renderSolvTable(factors);
 
             if(totalQuestions === 0){

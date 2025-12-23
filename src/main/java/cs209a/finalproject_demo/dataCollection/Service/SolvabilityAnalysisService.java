@@ -21,7 +21,7 @@ public class SolvabilityAnalysisService {
     }
 
     /**
-     * 获取所有问题的可解答性指标
+     * 鑾峰彇鎵€鏈夐棶棰樼殑鍙В绛旀€ф寚鏍?
      */
     public List<SolvabilityMetric> getSolvabilityMetrics(
             LocalDate start, LocalDate end) {
@@ -48,19 +48,22 @@ public class SolvabilityAnalysisService {
     }
 
     /**
-     * 分析影响可解答性的主要因素
+     * 鍒嗘瀽褰卞搷鍙В绛旀€х殑涓昏鍥犵礌
      */
     public List<SolvabilityFactor> analyzeSolvabilityFactors(
             LocalDate start, LocalDate end) {
 
         List<Map<String, Object>> results = repository.getGroupedMetrics(start, end);
 
-        // 提取可解答组和难解答组的统计数据
+        // 鎻愬彇鍙В绛旂粍鍜岄毦瑙ｇ瓟缁勭殑缁熻鏁版嵁
         Map<String, Double> solvableStats = Map.of();
         Map<String, Double> unsolvableStats = Map.of();
 
         for (Map<String, Object> row : results) {
-            boolean isSolvable = (Boolean) row.get("is_solvable");
+            Boolean isSolvable = (Boolean) row.get("is_solvable");
+            if (isSolvable == null) {
+                continue;
+            }
             double codeSnippetPct = ((Number) row.get("code_snippet_percentage")).doubleValue();
             double avgDescLength = ((Number) row.get("avg_description_length")).doubleValue();
             double avgTagCount = ((Number) row.get("avg_tag_count")).doubleValue();
@@ -85,7 +88,7 @@ public class SolvabilityAnalysisService {
 
         List<SolvabilityFactor> factors = new ArrayList<>();
 
-        // 1. 代码片段因素
+        // 1. 浠ｇ爜鐗囨鍥犵礌
         factors.add(new SolvabilityFactor(
                 "Code Snippet Presence",
                 solvableStats.getOrDefault("code_snippet", 0.0),
@@ -95,7 +98,7 @@ public class SolvabilityAnalysisService {
                 "% of questions with code"
         ));
 
-        // 2. 描述长度因素
+        // 2. 鎻忚堪闀垮害鍥犵礌
         factors.add(new SolvabilityFactor(
                 "Description Length",
                 solvableStats.getOrDefault("desc_length", 0.0),
@@ -105,7 +108,7 @@ public class SolvabilityAnalysisService {
                 "characters"
         ));
 
-        // 3. 标签数量因素
+        // 3. 鏍囩鏁伴噺鍥犵礌
         factors.add(new SolvabilityFactor(
                 "Tag Count",
                 solvableStats.getOrDefault("tag_count", 0.0),
@@ -115,7 +118,7 @@ public class SolvabilityAnalysisService {
                 "average tags per question"
         ));
 
-        // 4. 答案数量因素（注意：这可能是结果而非原因）
+        // 4. 绛旀鏁伴噺鍥犵礌锛堟敞鎰忥細杩欏彲鑳芥槸缁撴灉鑰岄潪鍘熷洜锛?
         factors.add(new SolvabilityFactor(
                 "Answer Count (Correlation)",
                 solvableStats.getOrDefault("answer_count", 0.0),
@@ -129,33 +132,48 @@ public class SolvabilityAnalysisService {
     }
 
     /**
-     * 获取可解答与难解答问题的对比统计
+     * 鑾峰彇鍙В绛斾笌闅捐В绛旈棶棰樼殑瀵规瘮缁熻
      */
     public Map<String, Object> getSolvabilityComparison(
             LocalDate start, LocalDate end) {
 
         List<Map<String, Object>> results = repository.getGroupedMetrics(start, end);
 
-        // 计算总数
-        long totalQuestions = results.stream()
-                .mapToLong(r -> ((Number) r.get("question_count")).longValue())
-                .sum();
+        // 璁＄畻鎬绘暟
+        long totalQuestions = 0;
+        long solvableCount = 0;
+        long unsolvableCount = 0;
+        long unknownCount = 0;
 
-        // 找出可解答组的数量
-        long solvableCount = results.stream()
-                .filter(r -> (Boolean) r.get("is_solvable"))
-                .mapToLong(r -> ((Number) r.get("question_count")).longValue())
-                .sum();
+        for (Map<String, Object> row : results) {
+            long count = ((Number) row.get("question_count")).longValue();
+            totalQuestions += count;
+
+            Boolean isSolvable = (Boolean) row.get("is_solvable");
+            if (Boolean.TRUE.equals(isSolvable)) {
+                solvableCount += count;
+            } else if (Boolean.FALSE.equals(isSolvable)) {
+                unsolvableCount += count;
+            } else {
+                unknownCount += count;
+            }
+        }
 
         double solvablePercentage = totalQuestions > 0 ?
                 (solvableCount * 100.0 / totalQuestions) : 0.0;
+        double unsolvablePercentage = totalQuestions > 0 ?
+                (unsolvableCount * 100.0 / totalQuestions) : 0.0;
+        double unknownPercentage = totalQuestions > 0 ?
+                (unknownCount * 100.0 / totalQuestions) : 0.0;
 
         return Map.of(
                 "total_questions", totalQuestions,
                 "solvable_count", solvableCount,
                 "solvable_percentage", Math.round(solvablePercentage * 100.0) / 100.0,
-                "unsolvable_count", totalQuestions - solvableCount,
-                "unsolvable_percentage", Math.round((100 - solvablePercentage) * 100.0) / 100.0,
+                "unsolvable_count", unsolvableCount,
+                "unsolvable_percentage", Math.round(unsolvablePercentage * 100.0) / 100.0,
+                "unknown_count", unknownCount,
+                "unknown_percentage", Math.round(unknownPercentage * 100.0) / 100.0,
                 "analysis_factors", analyzeSolvabilityFactors(start, end)
         );
     }
