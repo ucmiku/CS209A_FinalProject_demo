@@ -54,6 +54,7 @@ public class QuestionTitleCollectorService {
         return Mono.fromCallable(titleRepository::findAllQuestionIds)
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
+                .filter(id -> id >= 78350805)
                 .flatMap(this::fetchAndSaveAnswers, 3)
                 .then();
     }
@@ -99,7 +100,6 @@ public class QuestionTitleCollectorService {
         return Mono.fromCallable(titleRepository::findAllQuestionIds)
                 .subscribeOn(Schedulers.boundedElastic())
                 .flatMapMany(Flux::fromIterable)
-                .filter(id -> id <= 79790013)
                 .flatMap(this::fetchAndSaveComments, 3)
                 .then();
     }
@@ -140,7 +140,6 @@ public class QuestionTitleCollectorService {
         List<Long> allIds = questionRepository.findAll()
                 .stream()
                 .map(Question::getQuestionId)
-                .filter(id -> id <= 79321014)
                 .toList();
 
         List<List<Long>> batches = partition(allIds, BATCH_SIZE);

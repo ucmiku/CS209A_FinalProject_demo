@@ -3,7 +3,7 @@ package cs209a.finalproject_demo.DataAnalysis.dto;
 import java.time.LocalDateTime;
 public record SolvabilityMetric(
         Long questionId,
-        Boolean isSolvable,
+        boolean isSolvable,
         boolean hasCodeSnippet,
         int descriptionLength,
         int tagCount,

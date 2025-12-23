@@ -60,10 +60,7 @@ public class SolvabilityAnalysisService {
         Map<String, Double> unsolvableStats = Map.of();
 
         for (Map<String, Object> row : results) {
-            Boolean isSolvable = (Boolean) row.get("is_solvable");
-            if (isSolvable == null) {
-                continue;
-            }
+            boolean isSolvable = (Boolean) row.get("is_solvable");
             double codeSnippetPct = ((Number) row.get("code_snippet_percentage")).doubleValue();
             double avgDescLength = ((Number) row.get("avg_description_length")).doubleValue();
             double avgTagCount = ((Number) row.get("avg_tag_count")).doubleValue();
@@ -140,40 +137,24 @@ public class SolvabilityAnalysisService {
         List<Map<String, Object>> results = repository.getGroupedMetrics(start, end);
 
         // 璁＄畻鎬绘暟
-        long totalQuestions = 0;
-        long solvableCount = 0;
-        long unsolvableCount = 0;
-        long unknownCount = 0;
+        long totalQuestions = results.stream()
+                .mapToLong(r -> ((Number) r.get("question_count")).longValue())
+                .sum();
 
-        for (Map<String, Object> row : results) {
-            long count = ((Number) row.get("question_count")).longValue();
-            totalQuestions += count;
-
-            Boolean isSolvable = (Boolean) row.get("is_solvable");
-            if (Boolean.TRUE.equals(isSolvable)) {
-                solvableCount += count;
-            } else if (Boolean.FALSE.equals(isSolvable)) {
-                unsolvableCount += count;
-            } else {
-                unknownCount += count;
-            }
-        }
+        long solvableCount = results.stream()
+                .filter(r -> (Boolean) r.get("is_solvable"))
+                .mapToLong(r -> ((Number) r.get("question_count")).longValue())
+                .sum();
 
         double solvablePercentage = totalQuestions > 0 ?
                 (solvableCount * 100.0 / totalQuestions) : 0.0;
-        double unsolvablePercentage = totalQuestions > 0 ?
-                (unsolvableCount * 100.0 / totalQuestions) : 0.0;
-        double unknownPercentage = totalQuestions > 0 ?
-                (unknownCount * 100.0 / totalQuestions) : 0.0;
 
         return Map.of(
                 "total_questions", totalQuestions,
                 "solvable_count", solvableCount,
                 "solvable_percentage", Math.round(solvablePercentage * 100.0) / 100.0,
-                "unsolvable_count", unsolvableCount,
-                "unsolvable_percentage", Math.round(unsolvablePercentage * 100.0) / 100.0,
-                "unknown_count", unknownCount,
-                "unknown_percentage", Math.round(unknownPercentage * 100.0) / 100.0,
+                "unsolvable_count", totalQuestions - solvableCount,
+                "unsolvable_percentage", Math.round((100 - solvablePercentage) * 100.0) / 100.0,
                 "analysis_factors", analyzeSolvabilityFactors(start, end)
         );
     }

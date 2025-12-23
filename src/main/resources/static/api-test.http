@@ -15,19 +15,19 @@ GET http://localhost:8080/api/admin/stats
 
 ### 3. 第一阶段：数据采集（2025年数据）
 ### 3.1 爬取问题基础数据
-GET http://localhost:8080/api/collector/collect?tag=java&from=2025-10-20T00:00:00&to=2025-11-27T23:59:59
+GET http://localhost:8080/collector/collect?tag=java&from=2024-01-01T00:00:00&to=2024-01-04T23:59:59
 
 ### 等待数据保存完成（建议等待10-30秒）
 ### 可以在代码中添加延迟，或手动等待10秒
 
 ### 3.2 爬取问题标题和正文（分表1）
-GET http://localhost:8080/api/collector/collect-titles
+GET http://localhost:8080/collector/collect-titles
 
 ### 3.3 爬取答案（分表2）
-GET http://localhost:8080/api/collector/collect-answers
+GET http://localhost:8080/collector/collect-answers
 
 ### 3.4 爬取评论（分表3）
-GET http://localhost:8080/api/collector/collect-comments
+GET http://localhost:8080/collector/collect-comments
 
 ### 4. 第二阶段：数据分表处理
 ### 4.1 构建标签关系表（最重要的分表操作）

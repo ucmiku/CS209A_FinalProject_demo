@@ -4,11 +4,11 @@ import java.util.Set;
 
 public enum JavaTopics {//用于topics到tags的映射
 
-    GENERICS("generics"),
+    GENERICS("generics","polymorphism","reflection"),
     COLLECTIONS("collections", "java-collections","iterator","filter","nullpointerexception"),
     STREAM("stream","inputstream","outputstream","java-8","lambda","java-stream"),
-    IO("io", "file-io", "nio","bufferedreader"),
-    MULTITHREADING("multithreading", "concurrency", "thread", "executorservice"),
+    IO("io", "file-io", "nio","bufferedreader","inputstream","outputstream"),
+    MULTITHREADING("multithreading", "concurrency", "thread", "executorservice","threadpool"),
     SPRING("spring-boot","spring-data-jpa","spring-data-rest","spring"),
     REFLECTION("reflection","terminology"),
     SOCKET("socket", "networking","sockets"),

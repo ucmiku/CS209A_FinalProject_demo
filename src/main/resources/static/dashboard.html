@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8" />
@@ -562,6 +562,20 @@
         .timeline-label{font-size:12px;color:var(--muted)}
 
         .report-explain{margin-top:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);font-size:13px;color:var(--muted)}
+        /* Report rich content */
+        .report-kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+        .report-kpis .kpi{padding:8px 10px;border-radius:999px;border:1px solid rgba(255,255,255,0.10);background:rgba(0,0,0,0.14);font-size:12px;color:var(--muted)}
+        .report-kpis .kpi strong{color:var(--text);font-weight:750}
+        .pillMini{display:inline-flex;align-items:center;gap:6px;padding:2px 8px;border-radius:999px;border:1px solid rgba(255,255,255,0.10);background:rgba(255,255,255,0.06);color:rgba(255,255,255,0.86);font-size:12px}
+        .pillMini .miniDot{width:7px;height:7px;border-radius:99px;background:var(--brand2);box-shadow:0 6px 18px rgba(88,215,255,0.12) inset}
+        .report-points{display:grid;gap:10px;margin-top:12px}
+        .report-point{display:flex;gap:12px;align-items:flex-start;padding:12px;border-radius:12px;border:1px solid rgba(255,255,255,0.08);background:rgba(0,0,0,0.12)}
+        .report-point .ptIcon{width:34px;height:34px;border-radius:12px;background:rgba(122,167,255,0.14);border:1px solid rgba(122,167,255,0.24);display:flex;align-items:center;justify-content:center;font-size:18px;flex:0 0 auto}
+        .report-point .ptText{flex:1;min-width:0}
+        .report-point .ptText b{display:block;font-size:14px;margin:0 0 4px;color:rgba(255,255,255,0.92)}
+        .report-point .ptText p{margin:0;color:var(--muted);font-size:13px;line-height:1.55}
+        .report-note{margin-top:10px;padding:10px 12px;border-radius:12px;border:1px dashed rgba(255,255,255,0.16);background:rgba(255,255,255,0.03);color:var(--muted);font-size:12px;line-height:1.55}
+
     </style>
 </head>
 
@@ -1312,7 +1326,7 @@
                 .enter()
                 .append("line")
                 .attr("stroke-width", d => 2 + 10 * (d.value / maxVal))
-                    .on("mousemove", function (event, d) {
+                .on("mousemove", function (event, d) {
 
                     // ① 高亮当前连线
                     d3.select(this)
@@ -1919,9 +1933,211 @@
         const explainEl = document.getElementById("reportExplain");
 
         function openReport(moduleName){
+            const iconEl = document.querySelector("#reportCard .report-head .icon");
+            const timelineEl = document.getElementById("reportTimeline");
+
+            const nowStr = new Date().toLocaleString();
+
+            const REPORTS = {
+                "Topic Trends": {
+                    icon: "📈",
+                    subtitle: "TopicTrend · 近两年趋势解读",
+                    from: "近两年",
+                    to: "2025-01",
+                    fromColor: "rgba(122,167,255,0.9)",
+                    toColor: "rgba(64,214,138,0.9)",
+                    html: `
+                        <div class="report-kpis">
+                            <span class="kpi"><strong>整体</strong> 提问量持续下降</span>
+                            <span class="kpi"><strong>Spring</strong> 规模显著高于其他主题</span>
+                            <span class="kpi"><strong>2025-01</strong> 出现短暂反弹</span>
+                        </div>
+
+                        <div class="report-points">
+                            <div class="report-point">
+                                <div class="ptIcon">📉</div>
+                                <div class="ptText">
+                                    <b>社区问答依赖下降</b>
+                                    <p>近两年 Stack Overflow 问题数量整体呈持续下降趋势，反映出在 AI 编程工具普及后，开发者对社区问答的依赖明显减弱。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">🌱</div>
+                                <div class="ptText">
+                                    <b>Spring 生态最“高压”</b>
+                                    <p>Spring 相关问题数量始终显著高于 Stream、IO 和 Multithreading 等其他主题，表明其生态复杂度和使用广度更高。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">🤖</div>
+                                <div class="ptText">
+                                    <b>2025 年 1 月反弹信号</b>
+                                    <p>2025 年 1 月 Spring 问题出现短暂反弹，可能与 DeepSeek 等新一代 AI 工具兴起，引发技术选型、集成与实践层面的新问题有关。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-note">建议：对 2025-01 的问题样本做进一步聚类（部署 / 兼容 / 配置 / 依赖冲突），验证“反弹”驱动因素。</div>
+                    `
+                },
+
+                "Co-occurrence of Topics": {
+                    icon: "🏷️",
+                    subtitle: "TagOccurance · 标签共现结构",
+                    from: "框架集成",
+                    to: "生态分离",
+                    fromColor: "rgba(88,215,255,0.9)",
+                    toColor: "rgba(255,204,102,0.9)",
+                    html: `
+                        <div class="report-kpis">
+                            <span class="kpi"><strong>高频共现</strong> spring × spring-boot</span>
+                            <span class="kpi"><strong>其次</strong> hibernate × JPA</span>
+                            <span class="kpi"><strong>Android</strong> 相对独立子社区</span>
+                        </div>
+
+                        <div class="report-points">
+                            <div class="report-point">
+                                <div class="ptIcon">🌱</div>
+                                <div class="ptText">
+                                    <b>问题集中在 Spring 技术栈</b>
+                                    <p>标签共现网络显示，问题高度集中在 Spring 生态，其中 <span class="pillMini"><span class="miniDot"></span>spring</span> 与 <span class="pillMini"><span class="miniDot"></span>spring-boot</span> 的共现最为频繁。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">🧩</div>
+                                <div class="ptText">
+                                    <b>集成复杂性高于单点技术</b>
+                                    <p>其次是 hibernate 与 JPA 的共现，表明开发者的问题主要来源于框架组合使用与集成层面，而非单一技术本身。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">🤖</div>
+                                <div class="ptText">
+                                    <b>技术生态存在明显分离</b>
+                                    <p>Android 相关标签形成相对独立的子社区，说明不同技术生态之间的问题具有明显分离性。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-note">建议：在关系图上加入“社群簇”高亮（Spring / Android / ORM），帮助快速识别跨生态的边界与桥接点。</div>
+                    `
+                },
+
+                "Common Pitfalls in Multithreading": {
+                    icon: "🧵",
+                    subtitle: "MultiThreadPitfalls · 并发易错点",
+                    from: "高层抽象",
+                    to: "语义误解",
+                    fromColor: "rgba(122,167,255,0.9)",
+                    toColor: "rgba(255,107,107,0.9)",
+                    html: `
+                        <div class="report-kpis">
+                            <span class="kpi"><strong>首要痛点</strong> 线程池 / Executor 误用</span>
+                            <span class="kpi"><strong>其次</strong> 线程中断处理</span>
+                            <span class="kpi"><strong>较少</strong> 死锁 / 竞态 / 并发修改</span>
+                        </div>
+
+                        <div class="report-points">
+                            <div class="report-point">
+                                <div class="ptIcon">⚙️</div>
+                                <div class="ptText">
+                                    <b>线程池/Executor 误用最突出</b>
+                                    <p>多线程问题中，线程池 / Executor 误用数量远高于其他类型，说明开发者在高层并发抽象的使用与生命周期管理上最容易出错。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">⛔</div>
+                                <div class="ptText">
+                                    <b>中断语义理解不足</b>
+                                    <p>线程中断处理位列第二，反映出对中断语义理解不足（例如：吞掉中断、未恢复中断标记、阻塞调用的响应策略不清）。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">🔒</div>
+                                <div class="ptText">
+                                    <b>“经典并发问题”占比更低</b>
+                                    <p>死锁、竞态条件、并发修改等经典问题数量较少，说明现代开发者更多被“并发框架使用复杂性”困扰，而非底层并发原语本身。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-note">建议：在示例 ID 中抽取典型代码片段，形成“线程池错误模式卡片”（提交-关闭、队列/拒绝策略、资源泄露）。</div>
+                    `
+                },
+
+                "Solvable vs. Hard-to-Solve": {
+                    icon: "🧠",
+                    subtitle: "SovabilityAnalysis · 可解性因素",
+                    from: "因素对比",
+                    to: "写法建议",
+                    fromColor: "rgba(64,214,138,0.9)",
+                    toColor: "rgba(122,167,255,0.9)",
+                    html: `
+                        <div class="report-kpis">
+                            <span class="kpi"><strong>约 93%</strong> 问题难以解决</span>
+                            <span class="kpi"><strong>代码</strong> 是否包含影响有限</span>
+                            <span class="kpi"><strong>过长描述/过多标签</strong> 显著更难</span>
+                        </div>
+
+                        <div class="report-points">
+                            <div class="report-point">
+                                <div class="ptIcon">🧩</div>
+                                <div class="ptText">
+                                    <b>大多数问题难以解决</b>
+                                    <p>Stack Overflow 上绝大多数问题难以解决（约 <span class="pillMini"><span class="miniDot"></span>93%</span>）。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">🏷️</div>
+                                <div class="ptText">
+                                    <b>写得越长、贴得越多，越难</b>
+                                    <p>是否包含代码对问题能否解决影响有限，而问题描述过长、标签过多反而与“难以解决”显著相关。</p>
+                                </div>
+                            </div>
+                            <div class="report-point">
+                                <div class="ptIcon">✅</div>
+                                <div class="ptText">
+                                    <b>可解问题的“简洁结构”</b>
+                                    <p>相比之下，描述简洁、标签精准、能吸引更多回答参与的问题更容易被解决。</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="report-note">建议：在前端汇报中把关键因素做成“可操作建议”（删冗余描述、控制标签数量、补充最小可复现示例）。</div>
+                    `
+                }
+            };
+
+            const conf = REPORTS[moduleName] || {
+                icon: "📌",
+                subtitle: "自动汇报",
+                from: "开始",
+                to: "结束",
+                fromColor: "rgba(122,167,255,0.9)",
+                toColor: "rgba(64,214,138,0.9)",
+                html: `<div class="report-note">暂无该模块的专属汇报内容。</div>`
+            };
+
+            if(iconEl) iconEl.textContent = conf.icon;
             if(titleEl) titleEl.textContent = `模块：${moduleName}`;
-            if(subtitleEl) subtitleEl.textContent = `自动汇报 · ${new Date().toLocaleString()}`;
-            if(explainEl) explainEl.textContent = `观察到 2024 年 11 月至 2025 年 3 月期间 SPRING 话题数量显著上升，可能原因：DeepSeek 项目在同一时期发布并备受关注，DeepSeek 的本地部署方案与 Spring 生态深度绑定，导致大量关于本地部署、配置与兼容性的讨论和问题涌现。`;
+            if(subtitleEl) subtitleEl.textContent = `${conf.subtitle} · ${nowStr}`;
+
+            if(timelineEl){
+                timelineEl.innerHTML = `
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:${conf.fromColor}"></div>
+                        <div class="timeline-label">${conf.from}</div>
+                    </div>
+                    <div style="flex:1;background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));height:2px;border-radius:2px;margin:0 6px"></div>
+                    <div class="timeline-item">
+                        <div class="timeline-dot" style="background:${conf.toColor}"></div>
+                        <div class="timeline-label">${conf.to}</div>
+                    </div>
+                `;
+            }
+
+            if(explainEl) explainEl.innerHTML = conf.html;
+
             if(overlay) overlay.style.display = "flex";
             if(card) setTimeout(()=> card.style.transform = "translateY(0) scale(1)", 10);
         }
