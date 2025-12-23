@@ -409,6 +409,43 @@
             background: rgba(0,0,0,0.10);
         }
 
+        .stats{
+            margin-top: 10px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .stat{
+            padding: 10px 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(255,255,255,0.12);
+            background: rgba(0,0,0,0.18);
+            min-width: 160px;
+        }
+        .stat .label{
+            display: block;
+            font-size: 12px;
+            color: var(--muted);
+            margin-bottom: 4px;
+        }
+        .chartGrid{
+            margin-top: 12px;
+            display: grid;
+            gap: 12px;
+            grid-template-columns: 1fr;
+        }
+        .chartBox{
+            border: 1px solid rgba(255,255,255,0.10);
+            background: rgba(0,0,0,0.18);
+            border-radius: 12px;
+            padding: 10px;
+        }
+        @media (min-width: 900px){
+            .chartGrid{
+                grid-template-columns: 0.8fr 1.2fr;
+            }
+        }
+
         .footer{
             margin-top: 18px;
             color: var(--muted);
@@ -605,16 +642,77 @@
                     <div class="badge">3</div>
                     <div class="sumText">
                         <p class="h">Common Pitfalls in Multithreading</p>
-                        <p class="s">Regex/NLP 提取多线程常见坑点（待实现）</p>
+                        <p class="s">Top issue categories extracted from multithreading-related questions.</p>
                     </div>
                 </div>
-                <div class="chev">⌄</div>
+                <div class="chev">v</div>
             </summary>
             <div class="content">
-                <div class="empty">模块 3 预留：后续实现多线程常见异常/关键词/聚类主题的统计与展示。</div>
+                <div class="panel">
+                    <div class="row">
+                        <div class="field">
+                            <label>Start Date</label>
+                            <input type="date" id="mtStart" />
+                        </div>
+                        <div class="field">
+                            <label>End Date (inclusive)</label>
+                            <input type="date" id="mtEnd" />
+                        </div>
+                        <div class="field">
+                            <label>Top N Categories</label>
+                            <select id="mtTopN">
+                                <option>5</option>
+                                <option selected>10</option>
+                                <option>15</option>
+                                <option>20</option>
+                            </select>
+                        </div>
+                        <div class="field" style="margin-left:auto;">
+                            <label>&nbsp;</label>
+                            <button class="primary" type="button" id="mtLoadBtn">Load Pitfalls</button>
+                        </div>
+                    </div>
+
+                    <div class="hint">
+                        GET /api/analytics/multithreading/pitfalls?start=YYYY-MM-DD&end=YYYY-MM-DD&topN=10
+                    </div>
+                </div>
+
+                <div class="chartCard">
+                    <div class="chartTop">
+                        <div class="meta" id="mtMeta">No data loaded yet.</div>
+                        <div class="meta" id="mtMeta2"></div>
+                    </div>
+
+                    <canvas id="mtChart" height="120"></canvas>
+
+                    <div class="stats" id="mtStats" style="display:none;">
+                        <div class="stat">
+                            <span class="label">Total Issues</span>
+                            <b id="mtTotal">-</b>
+                        </div>
+                        <div class="stat">
+                            <span class="label">Most Common</span>
+                            <b id="mtCommon">-</b>
+                        </div>
+                    </div>
+
+                    <div class="msg" id="mtMsg"></div>
+
+                    <table class="miniTable" id="mtTable" style="display:none;">
+                        <thead>
+                        <tr>
+                            <th>Category</th>
+                            <th>Count</th>
+                            <th>Share</th>
+                            <th>Example Question IDs</th>
+                        </tr>
+                        </thead>
+                        <tbody id="mtBody"></tbody>
+                    </table>
+                </div>
             </div>
         </details>
-
         <!-- Module 4: Solvable vs. Hard -->
         <details class="module">
             <summary>
@@ -622,15 +720,85 @@
                     <div class="badge">4</div>
                     <div class="sumText">
                         <p class="h">Solvable vs. Hard-to-Solve</p>
-                        <p class="s">比较可解与难解问题的特征差异（待实现）</p>
+                        <p class="s">Compare solvable vs. hard-to-solve questions across key factors.</p>
                     </div>
                 </div>
-                <div class="chev">⌄</div>
+                <div class="chev">v</div>
             </summary>
             <div class="content">
-                <div class="empty">模块 4 预留：后续实现分组对比、关键因素（如 has_code、文本长度等）的展示。</div>
+                <div class="panel">
+                    <div class="row">
+                        <div class="field">
+                            <label>Start Date</label>
+                            <input type="date" id="solvStart" />
+                        </div>
+                        <div class="field">
+                            <label>End Date (inclusive)</label>
+                            <input type="date" id="solvEnd" />
+                        </div>
+                        <div class="field" style="margin-left:auto;">
+                            <label>&nbsp;</label>
+                            <button class="primary" type="button" id="solvLoadBtn">Load Comparison</button>
+                        </div>
+                    </div>
+
+                    <div class="hint">
+                        GET /api/analytics/solvability/comparison?start=YYYY-MM-DD&end=YYYY-MM-DD
+                    </div>
+                </div>
+
+                <div class="chartCard">
+                    <div class="chartTop">
+                        <div class="meta" id="solvMeta">No data loaded yet.</div>
+                        <div class="meta" id="solvMeta2"></div>
+                    </div>
+
+                    <div class="stats" id="solvStats" style="display:none;">
+                        <div class="stat">
+                            <span class="label">Total Questions</span>
+                            <b id="solvTotal">-</b>
+                        </div>
+                        <div class="stat">
+                            <span class="label">Solvable</span>
+                            <b id="solvPct">-</b>
+                        </div>
+                        <div class="stat">
+                            <span class="label">Hard-to-solve</span>
+                            <b id="unsolvPct">-</b>
+                        </div>
+                    </div>
+
+                    <div class="chartGrid">
+                        <div class="chartBox">
+                            <canvas id="solvDonut" height="200"></canvas>
+                        </div>
+                        <div class="chartBox">
+                            <canvas id="solvFactorsChart" height="200"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="msg" id="solvMsg"></div>
+
+                    <table class="miniTable" id="solvTable" style="display:none;">
+                        <thead>
+                        <tr>
+                            <th>Factor</th>
+                            <th>Solvable</th>
+                            <th>Hard-to-solve</th>
+                            <th>Difference</th>
+                            <th>Unit</th>
+                        </tr>
+                        </thead>
+                        <tbody id="solvBody"></tbody>
+                    </table>
+
+                    <div class="hint">
+                        Positive differences mean solvable questions have higher values for that factor.
+                    </div>
+                </div>
             </div>
         </details>
+
 
     </div>
 
@@ -1210,6 +1378,389 @@
         }
     });
 
+</script>
+<script>
+    const chartGridColor = "rgba(255,255,255,0.06)";
+    const chartTickColor = "rgba(255,255,255,0.70)";
+    const chartLabelColor = "rgba(255,255,255,0.85)";
+
+    function toNumber(value){
+        const num = Number(value);
+        return Number.isFinite(num) ? num : 0;
+    }
+
+    // ===== Module 3: Multithreading Pitfalls =====
+    const mtStartEl = document.getElementById("mtStart");
+    const mtEndEl = document.getElementById("mtEnd");
+    const mtTopNEl = document.getElementById("mtTopN");
+    const mtLoadBtn = document.getElementById("mtLoadBtn");
+    const mtMsg = document.getElementById("mtMsg");
+    const mtMeta = document.getElementById("mtMeta");
+    const mtMeta2 = document.getElementById("mtMeta2");
+    const mtStats = document.getElementById("mtStats");
+    const mtTotal = document.getElementById("mtTotal");
+    const mtCommon = document.getElementById("mtCommon");
+    const mtTable = document.getElementById("mtTable");
+    const mtBody = document.getElementById("mtBody");
+    const mtChartEl = document.getElementById("mtChart");
+
+    const issueLabels = {
+        RACE_CONDITION: "Race Condition",
+        DEADLOCK: "Deadlock",
+        MEMORY_VISIBILITY: "Memory Visibility / Volatile",
+        THREADPOOL_MISUSE: "ThreadPool / Executor Misuse",
+        CONCURRENT_MODIFICATION: "Concurrent Modification",
+        THREAD_INTERRUPTION: "Thread Interruption Handling",
+        GENERAL_MULTITHREADING: "General Multithreading"
+    };
+
+    if (mtStartEl && mtEndEl && startEl && endEl){
+        mtStartEl.value = startEl.value;
+        mtEndEl.value = endEl.value;
+    }
+
+    let mtChart = null;
+
+    function showMtMsg(text, type = "ok"){
+        if(!mtMsg) return;
+        mtMsg.style.display = "block";
+        mtMsg.className = "msg " + (type === "bad" ? "bad" : "ok");
+        mtMsg.textContent = text;
+    }
+    function hideMtMsg(){
+        if(!mtMsg) return;
+        mtMsg.style.display = "none";
+        mtMsg.textContent = "";
+    }
+
+    function renderMtTable(issues){
+        if(!mtTable || !mtBody) return;
+        mtBody.innerHTML = "";
+        issues.forEach(issue => {
+            const label = issueLabels[issue.category] || issue.category || "Unknown";
+            const count = toNumber(issue.occurrenceCount);
+            const pct = Number(issue.percentage);
+            const pctText = Number.isFinite(pct) ? `${pct.toFixed(2)}%` : "-";
+            const example = issue.exampleQuestionIds ? String(issue.exampleQuestionIds) : "-";
+
+            const tr = document.createElement("tr");
+            const tdLabel = document.createElement("td");
+            const tdCount = document.createElement("td");
+            const tdPct = document.createElement("td");
+            const tdExample = document.createElement("td");
+
+            tdLabel.textContent = label;
+            tdCount.textContent = String(count);
+            tdPct.textContent = pctText;
+            tdExample.textContent = example;
+            tdExample.style.fontFamily = "var(--mono)";
+
+            tr.appendChild(tdLabel);
+            tr.appendChild(tdCount);
+            tr.appendChild(tdPct);
+            tr.appendChild(tdExample);
+            mtBody.appendChild(tr);
+        });
+        mtTable.style.display = issues.length ? "" : "none";
+    }
+
+    function renderMtChart(issues){
+        if(!mtChartEl) return;
+        const labels = issues.map(i => issueLabels[i.category] || i.category || "Unknown");
+        const values = issues.map(i => toNumber(i.occurrenceCount));
+        const ctx = mtChartEl.getContext("2d");
+        if(mtChart) mtChart.destroy();
+        mtChart = new Chart(ctx, {
+            type: "bar",
+            data: {
+                labels,
+                datasets: [{
+                    data: values,
+                    backgroundColor: "rgba(122,167,255,0.55)",
+                    borderColor: "rgba(122,167,255,0.9)",
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                indexAxis: "y",
+                plugins: {
+                    legend: { display: false }
+                },
+                scales: {
+                    x: {
+                        ticks: { color: chartTickColor },
+                        grid: { color: chartGridColor }
+                    },
+                    y: {
+                        ticks: { color: chartTickColor },
+                        grid: { color: chartGridColor }
+                    }
+                }
+            }
+        });
+    }
+
+    async function loadMultithreading(){
+        hideMtMsg();
+        if(mtLoadBtn) mtLoadBtn.disabled = true;
+
+        const start = mtStartEl ? mtStartEl.value : "";
+        const endInclusive = mtEndEl ? mtEndEl.value : "";
+        if(!start || !endInclusive){
+            showMtMsg("Select start and end dates.", "bad");
+            if(mtLoadBtn) mtLoadBtn.disabled = false;
+            return;
+        }
+
+        const endExclusive = addDays(endInclusive, 1);
+        const topN = mtTopNEl ? mtTopNEl.value : "10";
+        const url = `${API_BASE}/multithreading/pitfalls?start=${start}&end=${endExclusive}&topN=${topN}`;
+
+        if(mtMeta) mtMeta.textContent = `Request: ${url}`;
+        if(mtMeta2) mtMeta2.textContent = `End (inclusive): ${endInclusive} · TopN: ${topN}`;
+
+        try{
+            const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+            if(!res.ok){
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status} ${res.statusText}\n${text}`);
+            }
+            const data = await res.json();
+            if(!Array.isArray(data) || data.length === 0){
+                if(mtChart) { mtChart.destroy(); mtChart = null; }
+                renderMtTable([]);
+                if(mtStats) mtStats.style.display = "none";
+                showMtMsg("No data returned for this range.", "bad");
+                return;
+            }
+
+            const issues = [...data].sort((a, b) => toNumber(b.occurrenceCount) - toNumber(a.occurrenceCount));
+            renderMtChart(issues);
+            renderMtTable(issues);
+
+            const total = issues.reduce((sum, i) => sum + toNumber(i.occurrenceCount), 0);
+            const top = issues[0];
+            const topLabel = issueLabels[top.category] || top.category || "Unknown";
+            if(mtTotal) mtTotal.textContent = String(total);
+            if(mtCommon) mtCommon.textContent = `${topLabel} (${toNumber(top.occurrenceCount)})`;
+            if(mtStats) mtStats.style.display = "";
+
+            showMtMsg(`Loaded ${issues.length} categories.`, "ok");
+        }catch(err){
+            console.error(err);
+            showMtMsg(`Request failed: ${err.message}`, "bad");
+        }finally{
+            if(mtLoadBtn) mtLoadBtn.disabled = false;
+        }
+    }
+
+    if(mtLoadBtn){
+        mtLoadBtn.addEventListener("click", loadMultithreading);
+    }
+
+    // ===== Module 4: Solvable vs. Hard-to-Solve =====
+    const solvStartEl = document.getElementById("solvStart");
+    const solvEndEl = document.getElementById("solvEnd");
+    const solvLoadBtn = document.getElementById("solvLoadBtn");
+    const solvMsg = document.getElementById("solvMsg");
+    const solvMeta = document.getElementById("solvMeta");
+    const solvMeta2 = document.getElementById("solvMeta2");
+    const solvStats = document.getElementById("solvStats");
+    const solvTotal = document.getElementById("solvTotal");
+    const solvPct = document.getElementById("solvPct");
+    const unsolvPct = document.getElementById("unsolvPct");
+    const solvTable = document.getElementById("solvTable");
+    const solvBody = document.getElementById("solvBody");
+    const solvDonutEl = document.getElementById("solvDonut");
+    const solvFactorsChartEl = document.getElementById("solvFactorsChart");
+
+    if (solvStartEl && solvEndEl && startEl && endEl){
+        solvStartEl.value = startEl.value;
+        solvEndEl.value = endEl.value;
+    }
+
+    let solvDonut = null;
+    let solvFactorsChart = null;
+
+    function showSolvMsg(text, type = "ok"){
+        if(!solvMsg) return;
+        solvMsg.style.display = "block";
+        solvMsg.className = "msg " + (type === "bad" ? "bad" : "ok");
+        solvMsg.textContent = text;
+    }
+    function hideSolvMsg(){
+        if(!solvMsg) return;
+        solvMsg.style.display = "none";
+        solvMsg.textContent = "";
+    }
+
+    function renderSolvTable(factors){
+        if(!solvTable || !solvBody) return;
+        solvBody.innerHTML = "";
+        factors.forEach(f => {
+            const tr = document.createElement("tr");
+            const tdFactor = document.createElement("td");
+            const tdSolv = document.createElement("td");
+            const tdHard = document.createElement("td");
+            const tdDiff = document.createElement("td");
+            const tdUnit = document.createElement("td");
+
+            const solvVal = Number(f.solvableValue);
+            const hardVal = Number(f.unsolvableValue);
+            const diffVal = Number(f.difference);
+
+            tdFactor.textContent = f.factorName || "-";
+            tdSolv.textContent = Number.isFinite(solvVal) ? solvVal.toFixed(2) : "-";
+            tdHard.textContent = Number.isFinite(hardVal) ? hardVal.toFixed(2) : "-";
+            tdDiff.textContent = Number.isFinite(diffVal) ? diffVal.toFixed(2) : "-";
+            tdUnit.textContent = f.unit || "-";
+
+            tr.appendChild(tdFactor);
+            tr.appendChild(tdSolv);
+            tr.appendChild(tdHard);
+            tr.appendChild(tdDiff);
+            tr.appendChild(tdUnit);
+            solvBody.appendChild(tr);
+        });
+        solvTable.style.display = factors.length ? "" : "none";
+    }
+
+    function renderSolvCharts(summary, factors){
+        if(solvDonutEl){
+            const ctx = solvDonutEl.getContext("2d");
+            if(solvDonut) solvDonut.destroy();
+            solvDonut = new Chart(ctx, {
+                type: "doughnut",
+                data: {
+                    labels: ["Solvable", "Hard-to-solve"],
+                    datasets: [{
+                        data: [summary.solvableCount, summary.unsolvableCount],
+                        backgroundColor: ["rgba(64,214,138,0.85)", "rgba(255,107,107,0.85)"],
+                        borderColor: ["rgba(64,214,138,1)", "rgba(255,107,107,1)"],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    plugins: {
+                        legend: { labels: { color: chartLabelColor } }
+                    }
+                }
+            });
+        }
+
+        if(solvFactorsChartEl){
+            const labels = factors.map(f => f.factorName || "Factor");
+            const solvValues = factors.map(f => toNumber(f.solvableValue));
+            const hardValues = factors.map(f => toNumber(f.unsolvableValue));
+            const ctx = solvFactorsChartEl.getContext("2d");
+            if(solvFactorsChart) solvFactorsChart.destroy();
+            solvFactorsChart = new Chart(ctx, {
+                type: "bar",
+                data: {
+                    labels,
+                    datasets: [
+                        {
+                            label: "Solvable",
+                            data: solvValues,
+                            backgroundColor: "rgba(64,214,138,0.6)",
+                            borderColor: "rgba(64,214,138,0.9)",
+                            borderWidth: 1
+                        },
+                        {
+                            label: "Hard-to-solve",
+                            data: hardValues,
+                            backgroundColor: "rgba(255,107,107,0.55)",
+                            borderColor: "rgba(255,107,107,0.9)",
+                            borderWidth: 1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    indexAxis: "y",
+                    plugins: {
+                        legend: { labels: { color: chartLabelColor } }
+                    },
+                    scales: {
+                        x: {
+                            ticks: { color: chartTickColor },
+                            grid: { color: chartGridColor }
+                        },
+                        y: {
+                            ticks: { color: chartTickColor },
+                            grid: { color: chartGridColor }
+                        }
+                    }
+                }
+            });
+        }
+    }
+
+    async function loadSolvability(){
+        hideSolvMsg();
+        if(solvLoadBtn) solvLoadBtn.disabled = true;
+
+        const start = solvStartEl ? solvStartEl.value : "";
+        const endInclusive = solvEndEl ? solvEndEl.value : "";
+        if(!start || !endInclusive){
+            showSolvMsg("Select start and end dates.", "bad");
+            if(solvLoadBtn) solvLoadBtn.disabled = false;
+            return;
+        }
+
+        const endExclusive = addDays(endInclusive, 1);
+        const url = `${API_BASE}/solvability/comparison?start=${start}&end=${endExclusive}`;
+
+        if(solvMeta) solvMeta.textContent = `Request: ${url}`;
+        if(solvMeta2) solvMeta2.textContent = `End (inclusive): ${endInclusive}`;
+
+        try{
+            const res = await fetch(url, { method: "GET", headers: { "Accept": "application/json" } });
+            if(!res.ok){
+                const text = await res.text();
+                throw new Error(`HTTP ${res.status} ${res.statusText}\n${text}`);
+            }
+            const data = await res.json();
+            const totalQuestions = toNumber(data.total_questions);
+            const solvableCount = toNumber(data.solvable_count);
+            const unsolvableCount = toNumber(data.unsolvable_count);
+            const solvablePct = Number(data.solvable_percentage);
+            const unsolvablePct = Number(data.unsolvable_percentage);
+            const factors = Array.isArray(data.analysis_factors) ? data.analysis_factors : [];
+
+            if(solvTotal) solvTotal.textContent = String(totalQuestions);
+            if(solvPct) solvPct.textContent = Number.isFinite(solvablePct) ?
+                `${solvablePct.toFixed(2)}% (${solvableCount})` :
+                `${solvableCount}`;
+            if(unsolvPct) unsolvPct.textContent = Number.isFinite(unsolvablePct) ?
+                `${unsolvablePct.toFixed(2)}% (${unsolvableCount})` :
+                `${unsolvableCount}`;
+            if(solvStats) solvStats.style.display = "";
+
+            renderSolvCharts({ solvableCount, unsolvableCount }, factors);
+            renderSolvTable(factors);
+
+            if(totalQuestions === 0){
+                showSolvMsg("No data returned for this range.", "bad");
+            }else{
+                showSolvMsg("Comparison loaded.", "ok");
+            }
+        }catch(err){
+            console.error(err);
+            showSolvMsg(`Request failed: ${err.message}`, "bad");
+        }finally{
+            if(solvLoadBtn) solvLoadBtn.disabled = false;
+        }
+    }
+
+    if(solvLoadBtn){
+        solvLoadBtn.addEventListener("click", loadSolvability);
+    }
 </script>
 <div id="graphTooltip"
      style="
