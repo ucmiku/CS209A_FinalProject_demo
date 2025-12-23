@@ -452,6 +452,52 @@
             font-size: 12px;
             text-align:center;
         }
+        .reportBtn{
+            appearance: none;
+            border-radius: 10px;
+            padding: 8px 10px;
+            font-size: 13px;
+            border: 1px solid rgba(255,255,255,0.08);
+            background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+            color: var(--text);
+            display:inline-flex;
+            gap:8px;
+            align-items:center;
+            justify-content:center;
+            min-width:72px;
+            position: absolute;
+            right: 56px;
+            top: 50%;
+            transform: translateY(-50%);
+            z-index: 3;
+        }
+        .reportBtn .dotAccent{
+            width:8px;height:8px;border-radius:8px;background:var(--brand2);box-shadow:0 6px 18px rgba(88,215,255,0.12) inset;
+        }
+
+        .report-overlay{
+            position:fixed;inset:0;background:linear-gradient(180deg, rgba(2,6,23,0.6), rgba(2,6,23,0.72));backdrop-filter: blur(6px);display:none;align-items:center;justify-content:center;z-index:12000;padding:24px;
+        }
+        details.module summary{ position: relative; }
+        .report-card{
+            width:760px;max-width:100%;border-radius:16px;padding:18px 18px 16px;background:linear-gradient(180deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));border:1px solid rgba(255,255,255,0.06);box-shadow:var(--shadow);
+            transform: translateY(8px) scale(0.995);
+            transition: transform 260ms cubic-bezier(.2,.9,.25,1), opacity 180ms ease;
+        }
+        .report-head{display:flex;align-items:center;gap:12px;margin-bottom:8px}
+        .report-head .icon{width:44px;height:44px;border-radius:10px;background:linear-gradient(135deg,var(--brand),var(--brand2));display:flex;align-items:center;justify-content:center;font-weight:800;color:#062033}
+        .report-head .meta{flex:1}
+        .report-head .meta h3{margin:0;font-size:16px}
+        .report-head .meta p{margin:6px 0 0;color:var(--muted);font-size:13px}
+        .report-close{background:transparent;border:0;color:var(--muted);font-size:18px;cursor:pointer}
+
+        .report-body{margin-top:12px;color:var(--text);font-size:14px;line-height:1.5}
+        .report-timeline{display:flex;gap:12px;margin-top:12px;align-items:center}
+        .timeline-item{display:flex;flex-direction:column;align-items:center;gap:6px}
+        .timeline-dot{width:12px;height:12px;border-radius:12px;background:rgba(122,167,255,0.9);box-shadow:0 8px 20px rgba(122,167,255,0.08)}
+        .timeline-label{font-size:12px;color:var(--muted)}
+
+        .report-explain{margin-top:12px;padding:12px;border-radius:10px;background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));border:1px solid rgba(255,255,255,0.04);font-size:13px;color:var(--muted)}
     </style>
 </head>
 
@@ -1762,6 +1808,54 @@
         solvLoadBtn.addEventListener("click", loadSolvability);
     }
 </script>
+<script>
+    document.addEventListener('DOMContentLoaded', function(){
+        const overlay = document.getElementById("reportOverlay");
+        const card = document.getElementById("reportCard");
+        const closeBtn = document.getElementById("reportClose");
+        const titleEl = document.getElementById("reportTitle");
+        const subtitleEl = document.getElementById("reportSubtitle");
+        const explainEl = document.getElementById("reportExplain");
+
+        function openReport(moduleName){
+            if(titleEl) titleEl.textContent = `模块：${moduleName}`;
+            if(subtitleEl) subtitleEl.textContent = `自动汇报 · ${new Date().toLocaleString()}`;
+            if(explainEl) explainEl.textContent = `观察到 2024 年 11 月至 2025 年 3 月期间 SPRING 话题数量显著上升，可能原因：DeepSeek 项目在同一时期发布并备受关注，DeepSeek 的本地部署方案与 Spring 生态深度绑定，导致大量关于本地部署、配置与兼容性的讨论和问题涌现。`;
+            if(overlay) overlay.style.display = "flex";
+            if(card) setTimeout(()=> card.style.transform = "translateY(0) scale(1)", 10);
+        }
+
+        function closeReport(){
+            if(card) card.style.transform = "translateY(8px) scale(0.995)";
+            if(overlay) overlay.style.display = "none";
+        }
+
+        if(closeBtn) closeBtn.addEventListener("click", closeReport);
+        if(overlay) overlay.addEventListener("click", function(e){ if(e.target === overlay) closeReport(); });
+        document.addEventListener("keydown", function(e){ if(e.key === "Escape") closeReport(); });
+
+        const modules = document.querySelectorAll("details.module");
+        modules.forEach(mod => {
+            const summary = mod.querySelector("summary");
+            if(!summary) return;
+            const btn = document.createElement("button");
+            btn.className = "reportBtn ghost";
+            btn.type = "button";
+            btn.innerHTML = `<span class=\"dotAccent\"></span><span style=\"font-weight:700\">汇报</span>`;
+            const chev = summary.querySelector('.chev');
+            if(chev) summary.insertBefore(btn, chev);
+            else summary.appendChild(btn);
+
+            btn.addEventListener("click", function(ev){
+                ev.stopPropagation();
+                const titleElLocal = summary.querySelector('.sumText .h');
+                const moduleName = titleElLocal ? titleElLocal.textContent.trim() : '未知模块';
+                openReport(moduleName);
+            });
+        });
+    });
+</script>
+
 <div id="graphTooltip"
      style="
        position: fixed;
@@ -1775,6 +1869,37 @@
        transition: opacity 0.15s;
        z-index: 10000;
      ">
+</div>
+
+<div class="report-overlay" id="reportOverlay">
+    <div class="report-card" role="dialog" aria-modal="true" id="reportCard">
+        <div class="report-head">
+            <div class="icon">报</div>
+            <div class="meta">
+                <h3 id="reportTitle">自动汇报</h3>
+                <p id="reportSubtitle">自动生成的事件摘要与可能原因分析</p>
+            </div>
+            <button class="report-close" id="reportClose">✕</button>
+        </div>
+
+        <div class="report-body">
+            <div class="report-timeline" id="reportTimeline">
+                <div class="timeline-item">
+                    <div class="timeline-dot"></div>
+                    <div class="timeline-label">2024-11</div>
+                </div>
+                <div style="flex:1;background:linear-gradient(90deg, rgba(255,255,255,0.04), rgba(255,255,255,0.02));height:2px;border-radius:2px;margin:0 6px"></div>
+                <div class="timeline-item">
+                    <div class="timeline-dot" style="background:rgba(64,214,138,0.9)"></div>
+                    <div class="timeline-label">2025-03</div>
+                </div>
+            </div>
+
+            <div class="report-explain" id="reportExplain">
+                观察到 2024 年 11 月至 2025 年 3 月期间 SPRING 话题数量显著上升，可能原因：DeepSeek 项目在同一时期发布并备受关注，DeepSeek 的本地部署方案与 Spring 生态深度绑定，导致大量关于本地部署、配置与兼容性的讨论和问题涌现。
+            </div>
+        </div>
+    </div>
 </div>
 
 
